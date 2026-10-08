@@ -1,8 +1,10 @@
 mod application;
 mod clipboard;
 mod clipboard_snapshot;
+mod diagnostics;
 mod hotkey;
 mod input;
+mod overlay;
 mod preferences;
 mod runtime;
 mod tray;

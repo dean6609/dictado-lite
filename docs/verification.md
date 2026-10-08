@@ -12,8 +12,13 @@ in memory; this smoke does not establish speech accuracy.
 
 Local recognition regression compares the existing private WAV to its saved
 Parakeet output, keeping text and recordings in ignored local storage. Numeric
-results and current limitations belong in benchmarks/. There is no tray,
-microphone, paste, visual or installer acceptance yet.
+results and current limitations belong in benchmarks/. Actual native checks now
+cover quiet physical capture, Escape cancellation, saved Notepad insertion,
+foreground-switch suppression, recovery paste, rich/bitmap clipboard restoration,
+native tray/shortcut controls and physical 100/150% DPI. See the
+[native UI checkpoint](../benchmarks/native-pill-2026-10-08.md).
+Live spoken dictation is explicitly deferred by the user. Browser, final complete
+app residency and offline installer acceptance remain pending.
 
 ## Acceptance work
 

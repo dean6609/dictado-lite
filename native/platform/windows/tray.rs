@@ -2,6 +2,7 @@ use super::{pw, runtime::WM_TRAY, wide};
 use crate::config::Config;
 use windows::core::w;
 use windows::Win32::Foundation::*;
+use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::UI::Shell::*;
 use windows::Win32::UI::WindowsAndMessaging::*;
 
@@ -26,7 +27,12 @@ impl Tray {
             uID: 1,
             uFlags: NIF_ICON | NIF_MESSAGE | NIF_TIP,
             uCallbackMessage: WM_TRAY,
-            hIcon: unsafe { LoadIconW(None, IDI_APPLICATION)? },
+            hIcon: unsafe {
+                LoadIconW(
+                    Some(HINSTANCE(GetModuleHandleW(None)?.0)),
+                    w!("DICTADO_ICON"),
+                )?
+            },
             ..Default::default()
         };
         let tip = wide("Dictado Lite · Mantén Ctrl+Alt+Espacio para hablar");
@@ -39,6 +45,48 @@ impl Tray {
     pub fn refresh(&self) {
         unsafe {
             let _ = Shell_NotifyIconW(NIM_ADD, &self.data);
+        }
+    }
+    pub fn update(&mut self, config: &Config, paused: bool) {
+        let key = if config.key == 0x20 {
+            "Espacio".into()
+        } else if (0x70..=0x87).contains(&config.key) {
+            format!("F{}", config.key - 0x70 + 1)
+        } else {
+            char::from_u32(config.key as u32).unwrap_or('?').to_string()
+        };
+        let mut keys: Vec<String> = [(2, "Ctrl"), (4, "Alt"), (1, "Mayús")]
+            .into_iter()
+            .filter(|(bit, _)| config.modifiers & bit != 0)
+            .map(|(_, name)| name.into())
+            .collect();
+        keys.push(key);
+        let text = if paused {
+            "Dictado Lite · Pausado".into()
+        } else {
+            format!("Dictado Lite · Mantén {} para hablar", keys.join("+"))
+        };
+        let mut tip: Vec<u16> = text.encode_utf16().take(126).collect();
+        tip.push(0);
+        self.data.szTip.fill(0);
+        self.data.szTip[..tip.len()].copy_from_slice(&tip);
+        let mut data = self.data;
+        data.uFlags = NIF_TIP;
+        unsafe {
+            let _ = Shell_NotifyIconW(NIM_MODIFY, &data);
+        }
+    }
+    pub fn notify(&self, message: &str) {
+        let mut data = self.data;
+        data.uFlags = NIF_INFO;
+        data.dwInfoFlags = NIIF_ERROR;
+        let title = wide("Dictado Lite");
+        data.szInfoTitle[..title.len()].copy_from_slice(&title);
+        let mut text: Vec<u16> = message.encode_utf16().take(254).collect();
+        text.push(0);
+        data.szInfo[..text.len()].copy_from_slice(&text);
+        unsafe {
+            let _ = Shell_NotifyIconW(NIM_MODIFY, &data);
         }
     }
 }

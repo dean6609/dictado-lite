@@ -22,7 +22,7 @@ The executable opens a native tray app. Development builds use an explicit model
 
 Hold Ctrl+Alt+Space to speak; release to recognize and paste. Escape cancels an
 active session. The tray controls pause, microphone, shortcut, cleanup and optional
-Windows startup. The installer and visual overlay remain in development.
+Windows startup. The native overlay is implemented; the installer remains in development.
 
 ```powershell
 ./target/release/dictado-lite.exe '<model.gguf>' '<mono-16k.wav>' --verify-model --repeat=3
@@ -59,6 +59,24 @@ settings only, never recordings or transcript history.
 Local desktop-only clipboard regression (temporarily replaces and restores the
 clipboard; do not run while copying other content):
 `cargo test --locked --lib receipt_restores -- --ignored --test-threads=1`.
+
+For a real live-input appearance capture use `--inspect-overlay --capture-seconds=60`
+with an explicit model, then cancel with Escape. This diagnostic shell mode makes
+the same pill eligible for window-capture tools and adds a temporary taskbar entry.
+Normal use has no main/taskbar window. `--metrics-file '<local.json>'` additionally
+writes a `.ui.json` sidecar with anonymous DPI/frame/focus/preference measurements.
+`--list-microphones` lists current inputs; `--capture-probe --microphone '<name>'`
+selects an input for the explicit five-second diagnostic. These flags are development
+fixtures, never required for normal installation or use.
+
+`--control-report` prints anonymous IPC status with an explicit `--cancel`, `--exit`
+or `--menu`. Control-only invocations do not start a new instance when none exists.
+Optional `DICTADO_UI_TRACE='<local.jsonl>'` records local UI lifecycle diagnostics;
+leave it unset in normal use. It does not record microphone PCM or recognized text.
+
+`assets/icon.svg` is the owned mark; `scripts/generate-icon.ps1` regenerates its
+Windows ICO using build-only GDI+. `build.rs` embeds the icon, DPI/asInvoker manifest
+and version resource with LLVM windres (GNU) or the Windows SDK compiler (MSVC).
 
 The only model is pinned in [models/manifest.json](models/manifest.json). Weights
 and private WAVs stay outside Git. No model is required for the regular checks.

@@ -12,7 +12,7 @@ invalidate late completions after cancellation. Audio stays in memory and captur
 opens only during a session. Recognition consumes mono f32 at 16 kHz. A single
 model will unload after an initial 30-second idle timeout, subject to measurement.
 
-The planned overlay is a 112 by 34 logical-pixel pill with a luminous dot and
+The overlay is a 112 by 34 logical-pixel pill with a luminous dot and
 real microphone levels. Hidden means no animation timer or drawing. It must
 respect focus, per-monitor DPI, high contrast and reduced motion. Win32 owns the
 tray and small settings dialogs. Error text uses DirectWrite.
@@ -45,7 +45,11 @@ metafile formats before any clipboard change; unsupported handles fail closed.
 post-injection read and restores only the still-owned clipboard sequence. A new
 user copy is never overwritten. Paste requires unchanged destination focus and
 released modifiers. Failed results remain in memory for explicit recovery copy.
-Current error dialogs are temporary; the nonactivating overlay is the next stage.
+`overlay/` implements work-area/DPI geometry, a Direct2D premultiplied surface and
+the nonactivating window/state bridge. Normal microphone bars read actual RMS;
+errors draw DirectWrite text with native accessible buttons. The surface is freed
+when hidden. Clipboard publication waits for closed menus and released shortcut
+modifiers; normal drawing never takes destination focus.
 
 Inherited web/audio-cloud/history tooling has been removed from the working tree;
 upstream references remain in Git history. GPU modules are dynamically loaded so

@@ -35,8 +35,21 @@ fn main() {
 }
 fn run() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().is_some_and(|arg| arg == "--list-microphones") {
+        use cpal::traits::{DeviceTrait, HostTrait};
+        let host = cpal::default_host();
+        println!(
+            "{}",
+            serde_json::json!({"devices":audio::capture::microphones()?,"default":host.default_input_device().and_then(|device| device.name().ok())})
+        );
+        return Ok(());
+    }
     if args.first().is_some_and(|arg| arg == "--capture-probe") {
-        let capture = audio::capture::Capture::start(None)?;
+        let selected = args
+            .windows(2)
+            .find(|pair| pair[0] == "--microphone")
+            .map(|pair| pair[1].as_str());
+        let capture = audio::capture::Capture::start(selected)?;
         std::thread::sleep(std::time::Duration::from_secs(5));
         let recording = capture.finish()?;
         let rms = (recording
