@@ -4,5 +4,8 @@
 pub const RECOGNITION_SAMPLE_RATE: u32 = 16_000;
 
 pub mod audio;
+pub mod config;
 pub mod engine;
+#[cfg(windows)]
+pub mod platform;
 pub mod session;

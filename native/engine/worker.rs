@@ -13,12 +13,14 @@ pub struct Completion {
     pub backend: String,
     pub load_ms: u128,
     pub inference_ms: u128,
+    pub voice_score: Option<f32>,
 }
 enum Command {
     Run {
         id: u64,
         samples: Vec<f32>,
         cancel: Cancellation,
+        rate: Option<usize>,
     },
     Unload,
     Close,
@@ -62,7 +64,29 @@ impl Worker {
                         id,
                         samples,
                         cancel,
+                        rate,
                     } => {
+                        let prepared = match rate {
+                            Some(rate) => crate::audio::resample::to_16k(&samples, rate),
+                            None => Ok(samples),
+                        };
+                        let samples = match prepared {
+                            Ok(samples) => samples,
+                            Err(error) => {
+                                let _ = outgoing.send(Completion {
+                                    id,
+                                    result: Err(error),
+                                    backend: String::new(),
+                                    load_ms: 0,
+                                    inference_ms: 0,
+                                    voice_score: None,
+                                });
+                                continue;
+                            }
+                        };
+                        // An observer, never a speech gate: preserve all PCM.
+                        let voice_score =
+                            rate.map(|_| crate::audio::resample::voice_score(&samples));
                         let start = Instant::now();
                         let loaded = if cancel.cancelled() {
                             Err(Error::Cancelled)
@@ -113,6 +137,7 @@ impl Worker {
                                 backend,
                                 load_ms,
                                 inference_ms,
+                                voice_score,
                             })
                             .is_err()
                         {
@@ -141,6 +166,31 @@ impl Worker {
                 id,
                 samples,
                 cancel: cancel.clone(),
+                rate: None,
+            })
+            .map_err(Error::message)?;
+        self.current_cancel = Some(cancel.clone());
+        Ok(cancel)
+    }
+    pub fn submit_recording(
+        &mut self,
+        id: u64,
+        recording: crate::audio::capture::Recording,
+    ) -> Result<Cancellation> {
+        if recording.samples.is_empty()
+            || !(8_000..=192_000).contains(&recording.rate)
+            || recording.samples.len() > recording.rate * 60 * 10
+        {
+            return Err(Error::message("Empty or invalid microphone recording"));
+        }
+        self.cancel();
+        let cancel = Cancellation::default();
+        self.commands
+            .try_send(Command::Run {
+                id,
+                samples: recording.samples,
+                cancel: cancel.clone(),
+                rate: Some(recording.rate),
             })
             .map_err(Error::message)?;
         self.current_cancel = Some(cancel.clone());
