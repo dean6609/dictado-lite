@@ -40,4 +40,3 @@ For contributors: [Build & contribute](CONTRIBUTING.md) ·
 
 Derived from Handy under [MIT](LICENSE). NVIDIA Parakeet weights use CC BY 4.0;
 see [model attribution](models/manifest.json) and [third-party notices](THIRD_PARTY_NOTICES.md).
-

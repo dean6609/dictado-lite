@@ -32,4 +32,3 @@ measurements in ignored local/ or artifacts/. Never modify Handy settings.
 
 Update README and affected docs with each PR. Record physical Windows checks and
 resource measurements separately from CI; compilation alone proves neither.
-
