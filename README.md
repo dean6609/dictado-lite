@@ -14,9 +14,20 @@ tiny microphone pill will be its only everyday interface.
 
 **Development status:** the native tray, hold/release shortcut, microphone capture,
 resampling, cancellation and guarded Windows paste are implemented. Actual WAV
-dictation into Notepad matches the previous Parakeet baseline. The visual pill,
-full conservative cleanup and standalone installer are still in development;
-no download is published.
+dictation into Notepad matches the previous Parakeet baseline. Full conservative
+cleanup and the standalone installer are still in development;
+no download is published. The tiny Direct2D pill now displays actual microphone
+levels and recoverable errors; [visual decisions and coverage](docs/decisions/native-pill.md)
+describe its native implementation and inspection captures.
+
+![Actual native pill with quiet microphone input](assets/native-pill-listening.jpg)
+
+The microphone drives the bars. On a paste failure, the result stays available:
+
+![Actual recovery after a deliberate target focus switch](assets/native-pill-recovery.jpg)
+
+These are isolated captures of the real executable in its developer inspection
+shell mode. Normal use adds no taskbar window. See [measured UI checkpoint](benchmarks/native-pill-2026-10-08.md).
 
 The planned app runs offline with one bundled Parakeet model (about 740 MB),
 Vulkan acceleration and CPU fallback. It will not require Handy, Node, Python or

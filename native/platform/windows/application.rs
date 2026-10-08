@@ -1,6 +1,6 @@
 //! UI-thread coordinator; inference, audio collection and clipboard pumping are
 //! separate owners. Only the current, uncancelled session can reach insertion.
-use super::{clipboard::Paste, hotkey, input, pw, tray::Tray, wide};
+use super::{clipboard::Paste, hotkey, input, overlay::Overlay, tray::Tray};
 use crate::{
     audio::{self, capture::Capture},
     config::Config,
@@ -9,7 +9,6 @@ use crate::{
 };
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
-use windows::core::w;
 use windows::Win32::Foundation::HWND;
 use windows::Win32::UI::WindowsAndMessaging::*;
 
@@ -19,11 +18,13 @@ pub enum Phase {
     Listening,
     Processing,
     Pasting,
+    Finishing,
 }
 pub struct Application {
     pub hwnd: HWND,
     pub config: Config,
     pub tray: Tray,
+    pub overlay: Overlay,
     pub paused: bool,
     pub phase: Phase,
     pub last_text: Option<String>,
@@ -39,6 +40,7 @@ pub struct Application {
     stop_after: Option<Duration>,
     began: Option<Instant>,
     recognition: Option<serde_json::Value>,
+    trigger: &'static str,
 }
 impl Application {
     pub fn new(
@@ -47,12 +49,16 @@ impl Application {
         model: PathBuf,
         metrics: Option<PathBuf>,
         stop_after: Option<Duration>,
+        inspect: bool,
     ) -> windows::core::Result<Self> {
         hotkey::configure(config.key, config.modifiers);
+        let mut tray = Tray::create(hwnd)?;
+        tray.update(&config, false);
         Ok(Self {
             hwnd,
             config,
-            tray: Tray::create(hwnd)?,
+            tray,
+            overlay: Overlay::create(hwnd, inspect)?,
             paused: false,
             phase: Phase::Idle,
             last_text: None,
@@ -68,9 +74,14 @@ impl Application {
             stop_after,
             began: None,
             recognition: None,
+            trigger: "microphone-release",
         })
     }
     fn begin(&mut self, target: HWND) -> Option<u64> {
+        if self.phase == Phase::Finishing {
+            self.phase = Phase::Idle;
+            self.overlay.hide();
+        }
         if self.phase != Phase::Idle || self.paused {
             return None;
         }
@@ -83,6 +94,8 @@ impl Application {
         self.target = target;
         self.last_text = None;
         self.recognition = None;
+        self.released = None;
+        self.trigger = "microphone-release";
         hotkey::active(Some(id));
         Some(id)
     }
@@ -95,6 +108,11 @@ impl Application {
                 self.capture = Some(capture);
                 self.began = Some(Instant::now());
                 self.phase = Phase::Listening;
+                if self.overlay.listening(target).is_err() {
+                    self.fail("No se pudo mostrar el indicador de micrófono.");
+                    return;
+                }
+                self.ui_metric();
                 self.timer();
             }
             Err(error) => self.fail(&format!("No se pudo abrir el micrófono. {error}")),
@@ -105,9 +123,14 @@ impl Application {
             return;
         };
         self.released = Some(Instant::now());
+        self.trigger = "wav-fixture";
         match audio::read_wav(&path).and_then(|samples| self.worker.submit(id, samples)) {
             Ok(_) => {
                 self.phase = Phase::Processing;
+                if self.overlay.processing_at(target).is_err() {
+                    self.fail("No se pudo mostrar el indicador de actividad.");
+                    return;
+                }
                 self.timer();
             }
             Err(error) => self.fail(&error.to_string()),
@@ -128,6 +151,10 @@ impl Application {
         {
             Ok(_) => {
                 self.phase = Phase::Processing;
+                if self.overlay.processing().is_err() {
+                    self.fail("No se pudo mostrar el indicador de actividad.");
+                    return;
+                }
                 self.timer();
             }
             Err(error) => self.fail(&error.to_string()),
@@ -143,6 +170,7 @@ impl Application {
         drop(self.paste.take());
         self.id = None;
         self.phase = Phase::Idle;
+        self.overlay.hide();
         self.last_text = None;
         self.timer();
     }
@@ -151,11 +179,13 @@ impl Application {
         self.paused = paused;
         self.sessions.set_paused(paused);
         hotkey::pause(paused);
+        self.tray.update(&self.config, paused);
     }
     pub fn save(&mut self) {
         hotkey::configure(self.config.key, self.config.modifiers);
+        self.tray.update(&self.config, self.paused);
         if let Err(error) = self.config.save() {
-            self.fail(&error.to_string());
+            self.fail(&format!("No se pudieron guardar los ajustes. {error}"));
         }
     }
     pub fn tick(&mut self, menu_open: bool) {
@@ -199,7 +229,6 @@ impl Application {
                         self.fail("Cambió la ventana de destino. El texto no se ha pegado.");
                         return;
                     }
-                    self.paste = Some(Paste::start(text));
                     self.injected = false;
                     self.phase = Phase::Pasting;
                 }
@@ -207,7 +236,22 @@ impl Application {
                 Err(error) => self.fail(&error.to_string()),
             }
         }
-        if self.phase == Phase::Pasting && !self.injected && input::modifiers_released() {
+        if self.phase == Phase::Pasting
+            && !self.injected
+            && !menu_open
+            && input::modifiers_released()
+        {
+            if self.paste.is_none() {
+                if unsafe { GetForegroundWindow() } != self.target {
+                    self.fail("Cambió la ventana de destino. El texto no se ha pegado.");
+                    return;
+                }
+                let Some(text) = self.last_text.clone() else {
+                    self.cancel();
+                    return;
+                };
+                self.paste = Some(Paste::start(text));
+            }
             let ready = self
                 .paste
                 .as_ref()
@@ -238,15 +282,31 @@ impl Application {
                     if let (Some(path), Some(released), Some(received)) =
                         (&self.metrics, self.released, outcome.received_at)
                     {
-                        let value = serde_json::json!({"scope":"release to post-injection clipboard read (receipt proxy)","release_to_clipboard_read_ms":received.saturating_duration_since(released).as_millis(),"recognition":self.recognition});
+                        let value = serde_json::json!({"scope":"trigger to post-injection clipboard read (receipt proxy)","trigger":self.trigger,"release_to_clipboard_read_ms":received.saturating_duration_since(released).as_millis(),"recognition":self.recognition});
                         let _ = std::fs::write(path, value.to_string());
                     }
                     self.last_text = None;
                     self.id = None;
-                    self.phase = Phase::Idle;
+                    self.phase = Phase::Finishing;
+                    if self.overlay.success().is_err() {
+                        self.overlay.hide();
+                        self.phase = Phase::Idle;
+                    }
                     hotkey::active(None);
                 }
                 Err(error) => self.fail(&error),
+            }
+        }
+        if self.phase != Phase::Idle {
+            let levels = self
+                .capture
+                .as_ref()
+                .map(|capture| capture.levels.read())
+                .unwrap_or([0.0; 9]);
+            match self.overlay.advance(levels) {
+                Ok(false) if self.phase == Phase::Finishing => self.phase = Phase::Idle,
+                Err(_) => self.fail("No se pudo mostrar el indicador de actividad."),
+                _ => {}
             }
         }
         self.timer();
@@ -254,16 +314,36 @@ impl Application {
     pub fn copy(&mut self) {
         if let Some(text) = self.last_text.as_deref() {
             if let Err(error) = super::clipboard::copy(self.hwnd, text) {
-                let message = wide(&format!("No se pudo copiar. {error}"));
-                unsafe {
-                    MessageBoxW(
-                        None,
-                        pw(&message),
-                        w!("Dictado Lite"),
-                        MB_OK | MB_ICONWARNING,
-                    );
-                }
+                self.fail(&format!("No se pudo copiar. {error}"));
+            } else {
+                self.overlay.hide();
+                self.last_text = None;
             }
+        }
+    }
+    pub fn retry(&mut self) {
+        let mut target = unsafe { GetForegroundWindow() };
+        if self.overlay.menu_owner() == Some(target) {
+            self.restore_target();
+            target = unsafe { GetForegroundWindow() };
+        }
+        if let Some(text) = self.last_text.clone() {
+            let Some(id) = self.begin(target) else {
+                return;
+            };
+            self.sessions.accept(id);
+            self.last_text = Some(text);
+            self.released = Some(Instant::now());
+            self.trigger = "paste-retry";
+            self.phase = Phase::Pasting;
+            self.injected = false;
+            if self.overlay.processing_at(target).is_err() {
+                self.fail("No se pudo mostrar el indicador de actividad.");
+                return;
+            }
+            self.timer();
+        } else {
+            self.start(target);
         }
     }
     pub fn restore_target(&self) {
@@ -271,31 +351,42 @@ impl Application {
             let _ = SetForegroundWindow(self.target);
         }
     }
-    fn fail(&mut self, error: &str) {
+    fn ui_metric(&self) {
+        if let Some(path) = &self.metrics {
+            let _ = std::fs::write(
+                path.with_extension("ui.json"),
+                self.overlay.metrics().to_string(),
+            );
+        }
+    }
+    pub fn fail(&mut self, error: &str) {
         let retained = self.last_text.take();
         self.cancel();
         self.last_text = retained;
         let message = if self.last_text.is_some() {
-            format!("{error}\n\nEl resultado sigue disponible. ¿Copiarlo al portapapeles?")
+            "No se confirmó el pegado. El texto sigue disponible."
+        } else if error.contains("micrófono") || error.to_lowercase().contains("microphone") {
+            "El micrófono no está disponible. Revisa la selección."
+        } else if error.to_lowercase().contains("model") || error.contains("GGUF") {
+            "No se encontró el modelo. Reinstala Dictado Lite."
+        } else if error.contains("No se detectó texto") {
+            "No se detectó texto. Vuelve a intentarlo."
+        } else if error.contains("indicador") {
+            "No se pudo mostrar el indicador de actividad."
+        } else if error.contains("ajustes") {
+            "No se pudieron guardar los ajustes. Reintenta."
         } else {
-            error.to_string()
+            "No se pudo completar el dictado. Reintenta."
         };
-        let message = wide(&message);
-        let action = unsafe {
-            MessageBoxW(
-                None,
-                pw(&message),
-                w!("Dictado Lite"),
-                if self.last_text.is_some() {
-                    MB_YESNO | MB_ICONWARNING
-                } else {
-                    MB_OK | MB_ICONWARNING
-                },
-            )
-        };
-        if action == IDYES {
-            self.copy();
+        if self
+            .overlay
+            .error(self.target, message, self.last_text.is_some())
+            .is_err()
+        {
+            self.overlay.hide();
+            self.tray.notify(message);
         }
+        self.ui_metric();
     }
     fn timer(&self) {
         unsafe {

@@ -1,7 +1,7 @@
 //! Single instance, message pump and tray-command routing.
 use super::{
     application::{Application, Phase},
-    hotkey, preferences, tray,
+    hotkey, overlay, preferences, tray,
 };
 use crate::{audio::capture::microphones, config::Config};
 use std::cell::RefCell;
@@ -62,6 +62,37 @@ unsafe extern "system" fn procedure(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM
         return DefWindowProcW(hwnd, msg, wp, lp);
     }
     let state = &*pointer;
+    if msg == overlay::WM_LAYOUT {
+        if let Ok(mut app) = state.try_borrow_mut() {
+            if app
+                .overlay
+                .layout()
+                .and_then(|()| app.overlay.advance([0.0; 9]).map(|_| ()))
+                .is_err()
+            {
+                app.fail("No se pudo mostrar el indicador de actividad.");
+            }
+        }
+        return LRESULT(0);
+    }
+    if msg == overlay::WM_OVERLAY {
+        if wp.0 == overlay::COPY_OR_OPTIONS {
+            if let Ok(mut app) = state.try_borrow_mut() {
+                if app.last_text.is_some() {
+                    app.copy();
+                } else {
+                    let _ = PostMessageW(Some(hwnd), WM_MENU, WPARAM(0), LPARAM(0));
+                }
+            }
+        } else if let Ok(mut app) = state.try_borrow_mut() {
+            match wp.0 {
+                overlay::RETRY => app.retry(),
+                overlay::DISMISS => app.cancel(),
+                _ => {}
+            }
+        }
+        return LRESULT(0);
+    }
     if msg != 0 && msg == TASKBAR_CREATED.load(Ordering::Relaxed) {
         if let Ok(app) = state.try_borrow() {
             app.tray.refresh();
@@ -75,15 +106,18 @@ unsafe extern "system" fn procedure(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM
                 app.phase == Phase::Listening,
                 app.paused,
                 app.last_text.is_some(),
+                app.overlay.menu_owner().unwrap_or(hwnd),
             )
         });
-        let Some((config, recording, paused, copy)) = view else {
+        let Some((config, recording, paused, copy, owner)) = view else {
             return LRESULT(0);
         };
+        super::diagnostics::event("menu.devices.begin");
         let devices = microphones().unwrap_or_default();
+        super::diagnostics::event("menu.devices.end");
         MENU_OPEN.store(true, Ordering::Release);
         let chosen = tray::menu(
-            hwnd,
+            owner,
             &config,
             recording,
             paused,
@@ -91,7 +125,12 @@ unsafe extern "system" fn procedure(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM
             &devices,
             preferences::autostart(),
         );
+        super::diagnostics::event(&format!("menu.selected.{chosen}"));
         MENU_OPEN.store(false, Ordering::Release);
+        if GetForegroundWindow() == owner {
+            let target = HWND(LAST_TARGET.load(Ordering::Acquire) as *mut _);
+            let _ = SetForegroundWindow(target);
+        }
         if chosen == tray::SHORTCUT {
             if let Ok(mut app) = state.try_borrow_mut() {
                 app.cancel();
@@ -99,10 +138,14 @@ unsafe extern "system" fn procedure(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM
             hotkey::pause(true);
             let shortcut = preferences::shortcut(&config);
             if let Ok(mut app) = state.try_borrow_mut() {
-                if let Ok(Some((key, mods))) = shortcut {
-                    app.config.key = key;
-                    app.config.modifiers = mods;
-                    app.save();
+                match shortcut {
+                    Ok(Some((key, mods))) => {
+                        app.config.key = key;
+                        app.config.modifiers = mods;
+                        app.save();
+                    }
+                    Err(_) => app.fail("No se pudieron abrir los ajustes de atajo."),
+                    _ => {}
                 }
                 hotkey::pause(app.paused);
             }
@@ -128,7 +171,9 @@ unsafe extern "system" fn procedure(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM
                 }
                 tray::COPY => app.copy(),
                 tray::AUTOSTART => {
-                    let _ = preferences::set_autostart(!preferences::autostart());
+                    if preferences::set_autostart(!preferences::autostart()).is_err() {
+                        app.fail("No se pudieron guardar los ajustes de inicio con Windows.");
+                    }
                 }
                 tray::EXIT => {
                     app.cancel();
@@ -163,6 +208,9 @@ unsafe extern "system" fn procedure(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM
     ]
     .contains(&msg)
     {
+        if msg == WM_CANCEL || msg == WM_CLOSE || (msg == WM_ENDSESSION && wp.0 != 0) {
+            let _ = EndMenu();
+        }
         if let Ok(mut app) = state.try_borrow_mut() {
             match msg {
                 WM_START => app.start(GetForegroundWindow()),
@@ -179,6 +227,8 @@ unsafe extern "system" fn procedure(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM
                 }
                 _ => {}
             }
+        } else if msg == WM_CANCEL || msg == WM_CLOSE {
+            let _ = PostMessageW(Some(hwnd), msg, wp, lp);
         }
         return LRESULT(0);
     }
@@ -189,7 +239,9 @@ pub fn run(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
         let _ = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
         let mutex = CreateMutexW(None, false, w!("Local\\DictadoLite.Native.v1"))?;
         if GetLastError() == ERROR_ALREADY_EXISTS {
+            let mut report = serde_json::json!({"instance":true,"controller":false});
             if let Ok(hwnd) = FindWindowExW(None, None, w!("DictadoLiteController"), None) {
+                report["controller"] = true.into();
                 let message = if args.iter().any(|arg| arg == "--cancel") {
                     WM_CANCEL
                 } else if args.iter().any(|arg| arg == "--exit") {
@@ -200,8 +252,38 @@ pub fn run(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
                     0
                 };
                 if message != 0 {
-                    let _ = PostMessageW(Some(hwnd), message, WPARAM(0), LPARAM(0));
+                    // Sent controls reach a modal menu loop; menu display
+                    // remains asynchronous to the requesting instance.
+                    let delivered = message != WM_MENU
+                        && SendMessageTimeoutW(
+                            hwnd,
+                            message,
+                            WPARAM(0),
+                            LPARAM(0),
+                            SMTO_ABORTIFHUNG | SMTO_BLOCK,
+                            1500,
+                            None,
+                        )
+                        .0 != 0;
+                    report["sent"] = delivered.into();
+                    report["message"] = message.into();
+                    if !delivered {
+                        let _ = PostMessageW(Some(hwnd), message, WPARAM(0), LPARAM(0));
+                    }
                 }
+            }
+            if args.iter().any(|arg| arg == "--control-report") {
+                println!("{report}");
+            }
+            let _ = CloseHandle(mutex);
+            return Ok(());
+        }
+        if args
+            .iter()
+            .any(|arg| ["--cancel", "--exit", "--menu"].contains(&arg.as_str()))
+        {
+            if args.iter().any(|arg| arg == "--control-report") {
+                println!("{}", serde_json::json!({"instance":false}));
             }
             let _ = CloseHandle(mutex);
             return Ok(());
@@ -257,6 +339,7 @@ pub fn run(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
             model,
             option("--metrics-file"),
             stop_after,
+            args.iter().any(|arg| arg == "--inspect-overlay"),
         )?));
         SetWindowLongPtrW(
             hwnd,
