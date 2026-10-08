@@ -26,7 +26,7 @@ abort patterns without linking multi-family safe wrappers.
 
 `native/audio.rs` accepts mono 16 kHz PCM16/float32 WAV for regression;
 `native/main.rs` reports cold/warm native load/run timing. SHA-256 validation is
-explicitly separate from measured native load. The future installer verifies
+explicitly separate from measured native load. The installer verifies
 the pinned payload; normal loading checks size and architecture.
 
 `native/audio/capture.rs` opens CPAL only while recording. Its callback mixes mono
@@ -53,8 +53,11 @@ modifiers; normal drawing never takes destination focus.
 
 Inherited web/audio-cloud/history tooling has been removed from the working tree;
 upstream references remain in Git history. GPU modules are dynamically loaded so
-absence of Vulkan can fall back to CPU. No CUDA is required. Pending packaging
-must stage the native DLLs and the applicable compiler runtimes/license texts.
+absence of Vulkan can fall back to CPU. No CUDA is required. Native packaging
+stages the DLLs, applicable compiler runtimes, one model and license texts.
+`native/setup/` separates payload validation/extraction, installation ownership,
+per-user registry/shortcut integration and the small worker-driven setup UI.
+See [installer contract](installer.md).
 
 `native/cleanup.rs` defines the text-only cleaner interface and conservative
 bilingual rules. The tray option controls post-recognition cleanup; retry reuses

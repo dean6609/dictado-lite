@@ -1,0 +1,3 @@
+realfft 3.5.0 · Henrik Enquist (HEnquist)
+Source: https://github.com/HEnquist/realfft/tree/d0d4eee0525fd27c96c8a046d6d107acd5ed84a6
+The shipped crate's Cargo.toml declares MIT and names the author. Upstream does not supply a separate LICENSE file or a copyright year. This distribution retains that declaration and attribution and supplies the standard MIT terms below; it does not invent an upstream copyright year.

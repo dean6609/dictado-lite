@@ -25,14 +25,28 @@ pub fn autostart() -> bool {
     }
 }
 pub fn set_autostart(enabled: bool) -> Result<(), String> {
+    let command = if enabled {
+        let executable = std::env::current_exe().map_err(|e| e.to_string())?;
+        Some(wide(&format!("\"{}\"", executable.display())))
+    } else {
+        None
+    };
     unsafe {
         let mut key = HKEY::default();
-        RegOpenKeyExW(HKEY_CURRENT_USER, RUN, None, KEY_SET_VALUE, &mut key)
-            .ok()
-            .map_err(|e| e.to_string())?;
-        let result = if enabled {
-            let executable = std::env::current_exe().map_err(|e| e.to_string())?;
-            let command = wide(&format!("\"{}\"", executable.display()));
+        RegCreateKeyExW(
+            HKEY_CURRENT_USER,
+            RUN,
+            None,
+            None,
+            REG_OPTION_NON_VOLATILE,
+            KEY_SET_VALUE,
+            None,
+            &mut key,
+            None,
+        )
+        .ok()
+        .map_err(|e| e.to_string())?;
+        let result = if let Some(command) = command {
             let bytes =
                 std::slice::from_raw_parts(command.as_ptr().cast::<u8>(), command.len() * 2);
             RegSetValueExW(key, w!("DictadoLite"), None, REG_SZ, Some(bytes)).ok()

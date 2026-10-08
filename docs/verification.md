@@ -17,8 +17,12 @@ cover quiet physical capture, Escape cancellation, saved Notepad insertion,
 foreground-switch suppression, recovery paste, rich/bitmap clipboard restoration,
 native tray/shortcut controls and physical 100/150% DPI. See the
 [native UI checkpoint](../benchmarks/native-pill-2026-10-08.md).
-Live spoken dictation is explicitly deferred by the user. Browser, final complete
-app residency and offline installer acceptance remain pending.
+Live spoken dictation is explicitly deferred by the user. Complete installed-app
+residency and offline install/upgrade/uninstall/dependency acceptance are recorded
+in the [installed checkpoint](../benchmarks/installed-app-2026-10-08.md). Browser
+insertion remains pending: automatic browser policy rejected the local-file test.
+Physical multimonitor/200% DPI and high-contrast/reduced-motion theme tests are
+also unperformed; do not describe the geometry unit tests as physical coverage.
 
 ## Acceptance work
 
