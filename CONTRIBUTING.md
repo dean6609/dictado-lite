@@ -1,21 +1,47 @@
 # Build and contribute
 
 Clone `https://github.com/dean6609/dictado-lite.git`. Use Windows x64 and Rust
-1.99.0 with rustfmt/clippy. At this bootstrap stage no C++ compiler is needed.
-The local implementation environment uses an isolated GNU Rust toolchain in
-`.tools/`; GitHub CI uses MSVC. Both compile the same native library.
+1.99.0 with rustfmt/clippy. Native inference needs a C++ compiler. GitHub CI uses
+Visual Studio on Windows. A local GNU build uses the pinned LLVM-MinGW
+compiler downloaded by the bootstrap script; no compiler from another project
+is required. Both build the same Parakeet-only native source patch.
 
 ```powershell
+./scripts/build-native.ps1 -Vulkan -Gnu
 ./scripts/check.ps1
 ```
 
-This command checks formatting, warnings, tests and release compilation. It does
-not run the inherited Tauri project. The current native foundation is a library,
-not an installable dictation app. C++/Vulkan build prerequisites will be added
-with the inference milestone and tested before documentation claims support.
+Use these two commands in the same shell. If using Rust MSVC with Visual Studio,
+omit `-Gnu`; omit `-Vulkan` for a CPU-only native build. The scripts download tools
+and source by SHA-256, compile C++, run format/clippy/tests/release and stage DLLs.
+The current executable is a file regression tool; the tray app is still pending.
+
+```powershell
+./target/release/dictado-lite.exe '<model.gguf>' '<mono-16k.wav>' --verify-model --repeat=3
+```
+
+Output is JSON with text and file-inference timing. Store private results only in
+ignored `local/`. This is not a release-to-paste measurement. Native cancellation,
+session recovery and model reload smoke (synthetic silence, no private voice):
+
+```powershell
+$env:DICTADO_TEST_MODEL = '<model.gguf>'
+./scripts/stage-runtime.ps1 -Directory target/release/deps
+cargo test --locked --release --test native_smoke -- --ignored
+```
+
+Set `DICTADO_TEST_CPU=1` to exercise CPU explicitly. `scripts/smoke-native.ps1`
+obtains the pinned model if no path is supplied, verifies size/hash and runs this
+smoke. Regular cargo tests mark it ignored; CI's CPU job explicitly downloads the
+weights and runs it separately. Ignoring is not a pass.
+
+For a local model-lifetime resource trace (forty seconds idle after inference):
+`./scripts/measure-core.ps1 -Model '<model.gguf>' -Wav '<mono-16k.wav>'`.
+The script keeps text/logs/metrics in ignored local/; publish only reviewed,
+anonymous numeric results. See [core baseline](benchmarks/core-2026-10-08.md).
 
 The only model is pinned in [models/manifest.json](models/manifest.json). Weights
-and private WAVs stay outside Git. No model is required for bootstrap checks.
+and private WAVs stay outside Git. No model is required for the regular checks.
 
 Read [AGENTS.md](AGENTS.md), [architecture](docs/architecture.md) and
 [verification](docs/verification.md) for the source map and behavior contracts.

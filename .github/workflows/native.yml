@@ -14,6 +14,39 @@ jobs:
       - name: Rust 1.99.0
         shell: pwsh
         run: rustup toolchain install 1.99.0 --profile minimal --component rustfmt --component clippy
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            ~/.cargo/registry
+            target
+            .tools/parakeet-build-msvc-cpu
+            .tools/parakeet-msvc-cpu
+          key: windows-cpu-${{ hashFiles('Cargo.lock', 'scripts/prepare-parakeet.ps1', 'scripts/build-native.ps1', 'scripts/tool-sources.json') }}
       - name: Format, lint, tests and release
         shell: pwsh
-        run: ./scripts/check.ps1
+        run: |
+          ./scripts/build-native.ps1
+          ./scripts/check.ps1
+          $env:DICTADO_TEST_CPU = '1'
+          ./scripts/smoke-native.ps1
+  vulkan:
+    name: Vulkan release build
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Rust 1.99.0
+        shell: pwsh
+        run: rustup toolchain install 1.99.0 --profile minimal --component rustfmt --component clippy
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            ~/.cargo/registry
+            target
+            .tools/parakeet-build-msvc-vulkan
+            .tools/parakeet-msvc-vulkan
+          key: windows-vulkan-${{ hashFiles('Cargo.lock', 'scripts/prepare-parakeet.ps1', 'scripts/build-native.ps1', 'scripts/tool-sources.json') }}
+      - name: Build Vulkan with CPU fallback
+        shell: pwsh
+        run: |
+          ./scripts/build-native.ps1 -Vulkan
+          ./scripts/check.ps1

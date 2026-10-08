@@ -2,9 +2,18 @@
 
 ## Current coverage
 
-Bootstrap CI checks Rust format, clippy, tests and a Windows release library
-build. There are no behavior tests yet because the bootstrap only establishes
-the package. No inference, microphone, tray, paste or installer test is claimed.
+CI checks Rust format, clippy, invalid-audio/session-invalidation tests and Windows
+release builds with CPU and Vulkan. The separate CPU smoke step obtains and
+verifies the pinned weights. `native_smoke` is ignored by regular cargo tests;
+that ignored result does not prove inference. With weights
+it checks in-flight abort without returning partial text, recovery on the same
+session and reload after model/session teardown. Synthetic silence is generated
+in memory; this smoke does not establish speech accuracy.
+
+Local recognition regression compares the existing private WAV to its saved
+Parakeet output, keeping text and recordings in ignored local storage. Numeric
+results and current limitations belong in benchmarks/. There is no tray,
+microphone, paste, visual or installer acceptance yet.
 
 ## Acceptance work
 
