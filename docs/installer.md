@@ -46,6 +46,10 @@ Build after the native release checks:
 ./scripts/build-installer.ps1 -Model '<pinned model.gguf>'
 ```
 
+Consumer packaging currently requires the verified GNU x64 build. MSVC CI still
+checks both application/setup sources; its compiler-runtime redistribution has
+not been validated as an offline consumer package, so the packager refuses it.
+
 Developer-only `--quiet --test` installs into the separate fixed sibling
 `DictadoLite-QA` without registry or shortcuts. `--uninstall --test --quiet` uses
 its own tiny helper. This is the same extraction/hash/upgrade/delete path as the

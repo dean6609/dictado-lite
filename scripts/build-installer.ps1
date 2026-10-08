@@ -17,7 +17,7 @@ try {
     Copy-Item LICENSE,THIRD_PARTY_NOTICES.md $stage
     Copy-Item licenses/* (Join-Path $stage 'licenses') -Recurse -Force
     $triple = rustc -vV | Select-String '^host: ' | ForEach-Object {$_.Line.Substring(6).Trim()}
-    if ($triple -notin 'x86_64-pc-windows-gnu','x86_64-pc-windows-msvc') {throw 'Packaging requires Windows x64 Rust'}
+    if ($triple -ne 'x86_64-pc-windows-gnu') {throw 'Offline packaging currently supports the verified GNU x64 release; MSVC builds remain development/CI checks'}
     $metadata = cargo metadata --locked --format-version 1 --filter-platform $triple | ConvertFrom-Json
     if ($LASTEXITCODE -ne 0) { throw 'Cargo metadata failed' }
     $notices = [System.Collections.Generic.List[string]]::new()
