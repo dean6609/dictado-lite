@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="240" viewBox="0 0 1000 240" role="img" aria-labelledby="title desc">
+  <title id="title">Dictado Lite</title>
+  <desc id="desc">Local voice, native Windows. An original typographic project banner, not an application screenshot.</desc>
+  <defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#171c28"/><stop offset="1" stop-color="#0b1019"/></linearGradient></defs>
+  <rect width="1000" height="240" rx="24" fill="url(#bg)"/>
+  <circle cx="74" cy="79" r="6" fill="#b6e7ef"/>
+  <text x="62" y="145" fill="#f0f3f8" font-family="Segoe UI, sans-serif" font-size="56" font-weight="600">Dictado Lite</text>
+  <text x="65" y="187" fill="#a2abba" font-family="Segoe UI, sans-serif" font-size="21">Local voice. Native Windows.</text>
+  <path d="M784 96v48m14-68v88m14-54v20m14-49v78m14-65v52m14-76v100m14-64v28" stroke="#a8dce9" stroke-width="5" stroke-linecap="round" opacity=".8"/>
+</svg>
