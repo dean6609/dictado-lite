@@ -37,6 +37,7 @@ pub struct Application {
     paste: Option<Paste>,
     injected: bool,
     released: Option<Instant>,
+    trigger_unix_ms: Option<u128>,
     metrics: Option<PathBuf>,
     stop_after: Option<Duration>,
     began: Option<Instant>,
@@ -71,6 +72,7 @@ impl Application {
             paste: None,
             injected: false,
             released: None,
+            trigger_unix_ms: None,
             metrics,
             stop_after,
             began: None,
@@ -96,6 +98,7 @@ impl Application {
         self.last_text = None;
         self.recognition = None;
         self.released = None;
+        self.trigger_unix_ms = None;
         self.trigger = "microphone-release";
         hotkey::active(Some(id));
         Some(id)
@@ -124,6 +127,7 @@ impl Application {
             return;
         };
         self.released = Some(Instant::now());
+        self.timestamp();
         self.trigger = "wav-fixture";
         match audio::read_wav(&path).and_then(|samples| self.worker.submit(id, samples)) {
             Ok(_) => {
@@ -142,6 +146,7 @@ impl Application {
             return;
         };
         self.released = Some(Instant::now());
+        self.timestamp();
         let Some(id) = self.id else {
             self.cancel();
             return;
@@ -283,7 +288,7 @@ impl Application {
                     if let (Some(path), Some(released), Some(received)) =
                         (&self.metrics, self.released, outcome.received_at)
                     {
-                        let value = serde_json::json!({"scope":"trigger to post-injection clipboard read (receipt proxy)","trigger":self.trigger,"release_to_clipboard_read_ms":received.saturating_duration_since(released).as_millis(),"recognition":self.recognition});
+                        let value = serde_json::json!({"scope":"trigger to post-injection clipboard read (receipt proxy)","trigger":self.trigger,"trigger_unix_ms":self.trigger_unix_ms,"release_to_clipboard_read_ms":received.saturating_duration_since(released).as_millis(),"recognition":self.recognition});
                         let _ = std::fs::write(path, value.to_string());
                     }
                     self.last_text = None;
@@ -335,6 +340,7 @@ impl Application {
             self.sessions.accept(id);
             self.last_text = Some(text);
             self.released = Some(Instant::now());
+            self.timestamp();
             self.trigger = "paste-retry";
             self.phase = Phase::Pasting;
             self.injected = false;
@@ -358,6 +364,14 @@ impl Application {
                 path.with_extension("ui.json"),
                 self.overlay.metrics().to_string(),
             );
+        }
+    }
+    fn timestamp(&mut self) {
+        if self.metrics.is_some() {
+            self.trigger_unix_ms = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .ok()
+                .map(|duration| duration.as_millis());
         }
     }
     pub fn fail(&mut self, error: &str) {

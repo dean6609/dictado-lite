@@ -22,7 +22,18 @@ The executable opens a native tray app. Development builds use an explicit model
 
 Hold Ctrl+Alt+Space to speak; release to recognize and paste. Escape cancels an
 active session. The tray controls pause, microphone, shortcut, cleanup and optional
-Windows startup. The native overlay is implemented; the installer remains in development.
+Windows startup. The native overlay and offline installer are implemented.
+
+After checks, build the offline Windows x64 installer with the pinned weights:
+
+```powershell
+./scripts/build-installer.ps1 -Model '<pinned model.gguf>'
+```
+
+The output is `artifacts/Dictado-Lite-0.1.0-Setup.exe` plus SHA-256. Both native
+application and setup binaries are built by check.ps1. Keep payloads outside Git.
+Read [installer ownership and QA](docs/installer.md) before changing packaging.
+No external installer compiler or administrator installation is needed.
 
 ```powershell
 ./target/release/dictado-lite.exe '<model.gguf>' '<mono-16k.wav>' --verify-model --repeat=3

@@ -17,7 +17,10 @@ coordination. `overlay/` contains placement, Direct2D rendering and the window
 bridge; `assets/` and `build.rs` own icon/manifest resources. `diagnostics.rs`
 writes only when explicit DICTADO_UI_TRACE is set. `native/main.rs` selects the
 tray or explicit regression CLI.
-`scripts/` builds the native engine;
+`native/setup/` owns the offline installer, payload validation, narrow file
+operations and per-user Windows integration. Review product-root/manifest/reparse
+guards and rollback/preservation before changing it. `scripts/build-installer.ps1`
+assembles the verified model and all dependency notices. `scripts/` builds the native engine;
 `models/manifest.json` pins weights; `docs/` describes contracts and verification.
 Upstream audio/resampling/insertion references remain available in Git history.
 
