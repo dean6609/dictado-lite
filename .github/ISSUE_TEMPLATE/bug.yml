@@ -1,0 +1,20 @@
+name: Bug report
+description: A reproducible Dictado Lite problem
+body:
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What happened and what you expected
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps, version and Windows build
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Safe evidence
+      description: Do not upload private voice, dictation text, credentials or device identifiers.
