@@ -1,0 +1,13 @@
+{
+  "name": "Parakeet TDT 0.6B v3 Q8_0",
+  "base_repository": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3",
+  "conversion_repository": "https://huggingface.co/handy-computer/parakeet-tdt-0.6b-v3-gguf",
+  "revision": "85ac09ea12fc4b1112fa76810059364bc6adc9de",
+  "filename": "parakeet-tdt-0.6b-v3-Q8_0.gguf",
+  "bytes": 739508576,
+  "sha256": "5859f77944efcd8eafa23a6350731960b2b55b2203df51f319665c807d802cc7",
+  "hash_source": "Hugging Face model API at the pinned revision, siblings[].lfs.sha256",
+  "license": "CC-BY-4.0",
+  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "attribution": "NVIDIA Parakeet TDT 0.6B v3; GGUF conversion and Q8_0 quantization by handy-computer. Converted weights differ from the original model format."
+}

@@ -1,0 +1,8 @@
+Dictado Lite is an independent derivative of Handy v0.9.8.
+Handy: Copyright (c) 2025 CJ Pais, MIT License (see LICENSE).
+Upstream: https://github.com/cjpais/Handy
+Base commit: 14f6f0d31cb22a4268acfbddba3052820fd0a06e
+
+This project is not affiliated with Handy, NVIDIA, Apple or Google.
+Original notices remain in the Git history and LICENSE.
+Parakeet weights are separate CC BY 4.0 material; see models/manifest.json.

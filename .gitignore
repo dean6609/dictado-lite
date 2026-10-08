@@ -45,3 +45,23 @@ result
 
 # Python bytecode (scripts/)
 __pycache__/
+
+# Independent project: private inputs and build tools never enter Git.
+/.tools/
+/local/
+/artifacts/
+**/target/
+*.gguf
+*.bin
+*.mp3
+*.flac
+*.wav
+*.dmp
+.env
+.env.*
+*.pem
+*.key
+/pruebas_audio/
+/DEVELOPMENT_PLAN.md
+/LITE_DESIGN.md
+/NEXT_CHAT_PROMPT.md
