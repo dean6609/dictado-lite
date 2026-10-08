@@ -3,6 +3,7 @@
 use super::{clipboard::Paste, hotkey, input, overlay::Overlay, tray::Tray};
 use crate::{
     audio::{self, capture::Capture},
+    cleanup::{Conservative, TextCleaner},
     config::Config,
     engine::{Backend, Worker},
     session::Sessions,
@@ -219,8 +220,8 @@ impl Application {
                     self.recognition = Some(
                         serde_json::json!({"backend":completion.backend,"load_ms":completion.load_ms,"inference_ms":completion.inference_ms,"voice_score":completion.voice_score}),
                     );
-                    let text = if self.config.cleanup && !text.contains(['`', '{', '}', '\n']) {
-                        text.split_whitespace().collect::<Vec<_>>().join(" ")
+                    let text = if self.config.cleanup {
+                        Conservative.clean(&text)
                     } else {
                         text
                     };
