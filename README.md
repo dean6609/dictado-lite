@@ -15,9 +15,12 @@ microphone pill are its everyday interface. **Escape** cancels.
 The native Windows x64 installer contains the application, one Parakeet Q8_0
 model and all notices. Run `Dictado-Lite-0.1.0-Setup.exe`, install for your user and
 open Dictado Lite from Start. It works offline with Vulkan acceleration and CPU
-fallback. No Handy, Node, Python, CUDA or browser runtime is required. The built
-installer is under release verification; a download is published only after its
-current-commit checks pass. See [installation details](docs/installer.md).
+fallback. No Handy, Node, Python, CUDA or browser runtime is required.
+
+[Download Windows x64 installer](https://github.com/dean6609/dictado-lite/releases/download/dictado-v0.1.0/Dictado-Lite-0.1.0-Setup.exe)
+· [SHA-256](https://github.com/dean6609/dictado-lite/releases/download/dictado-v0.1.0/Dictado-Lite-0.1.0-Setup.exe.sha256)
+· [Installation details](docs/installer.md).
+Downloads require access to this private repository; the installed app needs no account.
 
 ![Actual native pill with quiet microphone input](assets/native-pill-listening.jpg)
 

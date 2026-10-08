@@ -7,9 +7,9 @@ claim that a fresh Windows VM was tested.
 
 ## Installer and dependencies
 
-- Native setup stub 693,760 bytes; application 2,007,040 bytes; one GGUF
+- Native setup stub 694,272 bytes; application 2,007,040 bytes; one GGUF
   739,508,576 bytes with exact published SHA-256.
-- Full offline setup 794,975,092 bytes (about 758 MiB), including runtime DLLs,
+- Full offline setup 794,976,116 bytes (about 758 MiB), including runtime DLLs,
   model and licenses. Final whole-file digest is provided beside the artifact.
 - `--test --quiet` installed the complete payload in 2.08 s with PATH restricted
   to Windows directories. Upgrade to the final build took 2.74 s. Tiny-stub

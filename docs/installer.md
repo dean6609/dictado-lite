@@ -6,6 +6,8 @@ texts, followed by a bounded JSON index and footer. Neither installer nor app
 downloads a model or invokes Node/Python/Handy. The setup UI offers Install and
 Cancel and reports copy/hash progress from a worker. Startup remains optional/off.
 
+![Actual packaged setup window](../assets/native-installer.jpg)
+
 Install for the current user in `%LOCALAPPDATA%/Programs/DictadoLite`, create a
 Start Menu shortcut and a unique HKCU uninstall entry. The tiny uninstaller
 relocates itself to a unique TEMP file so Windows can release its installed image;

@@ -34,7 +34,10 @@ fn run() -> Result<()> {
         }
         return Ok(());
     }
-    if args.iter().any(|a| a == "--uninstall") {
+    let uninstall_image = std::env::current_exe()?
+        .file_name()
+        .is_some_and(|name| name.eq_ignore_ascii_case("dictado-uninstall.exe"));
+    if args.iter().any(|a| a == "--uninstall") || (args.is_empty() && uninstall_image) {
         if quiet
             || message(
                 "¿Desinstalar Dictado Lite? Se conservarán tus ajustes.",
