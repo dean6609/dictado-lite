@@ -96,3 +96,7 @@ delete the merged branch. Never publish this project's branches to Handy.
 Branch protection is unavailable for this private repository on the current
 GitHub plan (API returned 403). Keep it private and apply the same check/review
 criteria manually; do not use that limitation to merge failing or stale checks.
+
+Add `--cleanup` to the explicit WAV CLI to measure the same conservative cleanup
+used by the tray. Reports include cleanup_us; raw CLI recognition is the default.
+See [cleanup rules](docs/decisions/text-cleanup.md) and their protected-content tests.

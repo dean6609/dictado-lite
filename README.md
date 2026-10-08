@@ -14,8 +14,7 @@ tiny microphone pill will be its only everyday interface.
 
 **Development status:** the native tray, hold/release shortcut, microphone capture,
 resampling, cancellation and guarded Windows paste are implemented. Actual WAV
-dictation into Notepad matches the previous Parakeet baseline. Full conservative
-cleanup and the standalone installer are still in development;
+dictation into Notepad matches the previous Parakeet baseline. Conservative bilingual cleanup is implemented; the standalone installer is still in development;
 no download is published. The tiny Direct2D pill now displays actual microphone
 levels and recoverable errors; [visual decisions and coverage](docs/decisions/native-pill.md)
 describe its native implementation and inspection captures.
@@ -41,3 +40,4 @@ For contributors: [Build & contribute](CONTRIBUTING.md) ·
 
 Derived from Handy under [MIT](LICENSE). NVIDIA Parakeet weights use CC BY 4.0;
 see [model attribution](models/manifest.json) and [third-party notices](THIRD_PARTY_NOTICES.md).
+

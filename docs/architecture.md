@@ -55,3 +55,7 @@ Inherited web/audio-cloud/history tooling has been removed from the working tree
 upstream references remain in Git history. GPU modules are dynamically loaded so
 absence of Vulkan can fall back to CPU. No CUDA is required. Pending packaging
 must stage the native DLLs and the applicable compiler runtimes/license texts.
+
+`native/cleanup.rs` defines the text-only cleaner interface and conservative
+bilingual rules. The tray option controls post-recognition cleanup; retry reuses
+the retained result without cleaning a second time. See decisions/text-cleanup.md.

@@ -37,3 +37,7 @@ VRAM, cold/warm model load and release-to-insertion. Compare repeated runs on th
 same machine/model/audio with the previous accepted baseline. Full-WAV inference
 time is not release-to-insertion latency. Packaging acceptance requires a clean
 offline install/uninstall without Handy, Node, Python or WebView2 dependencies.
+
+Cleanup regression: unit cases protect names/dates/negation/English/code and
+exercise mechanical edits and the narrow acoustic/repetition rules. Use explicit
+WAV --cleanup runs for local bilingual baseline comparisons; never publish text.

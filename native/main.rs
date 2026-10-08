@@ -13,6 +13,7 @@ struct Measurement {
     load_ms: u128,
     inference_ms: u128,
     text: String,
+    cleanup_us: u128,
 }
 fn main() {
     if let Err(error) = run() {
@@ -104,13 +105,23 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     for id in 1..=repeat as u64 {
         worker.submit(id, samples.clone())?;
         let result = worker.completions.recv()?;
+        let text = result.result?;
+        let cleanup = std::time::Instant::now();
+        let (text, cleanup_us) = if args.iter().any(|a| a == "--cleanup") {
+            use dictado_lite::cleanup::TextCleaner;
+            let text = dictado_lite::cleanup::Conservative.clean(&text);
+            (text, cleanup.elapsed().as_micros())
+        } else {
+            (text, 0)
+        };
         println!(
             "{}",
             serde_json::to_string(&Measurement {
                 backend: result.backend,
                 load_ms: result.load_ms,
                 inference_ms: result.inference_ms,
-                text: result.result?
+                text,
+                cleanup_us,
             })?
         );
     }

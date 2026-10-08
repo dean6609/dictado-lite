@@ -11,7 +11,8 @@ in the same shell first (local GNU adds `-Gnu`, GPU adds `-Vulkan`). See CONTRIB
 Source map: `native/engine/` owns the C ABI, worker and model lifetime;
 `native/session.rs` rejects invalidated results; `native/audio.rs` reads regression
 WAVs; `native/audio/` captures and resamples PCM; `native/config.rs` owns separate
-settings. `native/platform/windows/` owns tray, shortcut, focus, clipboard and UI
+settings. `native/cleanup.rs` owns text cleanup and protected-content cases.
+`native/platform/windows/` owns tray, shortcut, focus, clipboard and UI
 coordination. `overlay/` contains placement, Direct2D rendering and the window
 bridge; `assets/` and `build.rs` own icon/manifest resources. `diagnostics.rs`
 writes only when explicit DICTADO_UI_TRACE is set. `native/main.rs` selects the
@@ -31,3 +32,4 @@ measurements in ignored local/ or artifacts/. Never modify Handy settings.
 
 Update README and affected docs with each PR. Record physical Windows checks and
 resource measurements separately from CI; compilation alone proves neither.
+
