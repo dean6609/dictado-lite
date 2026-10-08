@@ -12,9 +12,10 @@ Dictado Lite is being built as a small Windows dictation app: hold a shortcut to
 speak, release it to insert text where you are writing. A quiet tray menu and a
 tiny microphone pill will be its only everyday interface.
 
-**Development status:** repository and native Rust foundation only. The tray,
-microphone, pill and standalone installer are not available yet. The inherited
-Handy sources remain temporarily for extraction. No download is published.
+**Development status:** a native Parakeet engine and local WAV regression tool.
+The tray, microphone capture, pill and standalone installer are not available
+yet. The web application and unused recognizers have been removed from the
+active build. No download is published.
 
 The planned app runs offline with one bundled Parakeet model (about 740 MB),
 Vulkan acceleration and CPU fallback. It will not require Handy, Node, Python or
