@@ -63,6 +63,3 @@ try {
     "$hash  $([System.IO.Path]::GetFileName($target))" | Set-Content ($target+'.sha256') -Encoding ascii
     Write-Output "$target ($((Get-Item -LiteralPath $target).Length) bytes; SHA256 $hash)"
 } finally {Pop-Location}
-
-
-
