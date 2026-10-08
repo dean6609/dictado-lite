@@ -1,0 +1,19 @@
+name: Native Windows
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  check:
+    name: Windows checks
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Rust 1.99.0
+        shell: pwsh
+        run: rustup toolchain install 1.99.0 --profile minimal --component rustfmt --component clippy
+      - name: Format, lint, tests and release
+        shell: pwsh
+        run: ./scripts/check.ps1
