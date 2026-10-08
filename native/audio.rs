@@ -3,6 +3,9 @@ use crate::engine::{Error, Result};
 use crate::RECOGNITION_SAMPLE_RATE;
 use std::path::Path;
 
+pub mod capture;
+pub mod resample;
+
 pub fn read_wav(path: &Path) -> Result<Vec<f32>> {
     let mut wav = hound::WavReader::open(path).map_err(Error::message)?;
     let spec = wav.spec();

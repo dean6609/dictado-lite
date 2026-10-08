@@ -10,7 +10,10 @@ in the same shell first (local GNU adds `-Gnu`, GPU adds `-Vulkan`). See CONTRIB
 
 Source map: `native/engine/` owns the C ABI, worker and model lifetime;
 `native/session.rs` rejects invalidated results; `native/audio.rs` reads regression
-WAVs; `native/main.rs` is the file CLI. `scripts/` builds the native engine;
+WAVs; `native/audio/` captures and resamples PCM; `native/config.rs` owns separate
+settings. `native/platform/windows/` owns tray, shortcut, focus, clipboard and UI
+coordination. `native/main.rs` selects the tray or explicit regression CLI.
+`scripts/` builds the native engine;
 `models/manifest.json` pins weights; `docs/` describes contracts and verification.
 Upstream audio/resampling/insertion references remain available in Git history.
 

@@ -27,8 +27,25 @@ abort patterns without linking multi-family safe wrappers.
 `native/audio.rs` accepts mono 16 kHz PCM16/float32 WAV for regression;
 `native/main.rs` reports cold/warm native load/run timing. SHA-256 validation is
 explicitly separate from measured native load. The future installer verifies
-the pinned payload; normal loading checks size and architecture. Capture,
-resampling/VAD, conservative cleanup and Windows UI/insertion remain to be added.
+the pinned payload; normal loading checks size and architecture.
+
+`native/audio/capture.rs` opens CPAL only while recording. Its callback mixes mono
+into a two-second preallocated ring and publishes nine real RMS segments; the
+collector appends bounded PCM outside the audio callback. `resample.rs` drains
+Rubato's delay line so the final syllable is retained. Earshot observes frames
+without removing audio; its score is diagnostic, never a speech gate.
+
+`native/platform/windows/runtime.rs` owns the single-instance message loop,
+foreground notifications and tray command routing. The keyboard hook is event
+driven; no idle keyboard-poll timer. `application.rs` coordinates the session
+gate, capture, worker and paste. Settings are independent in LocalAppData/DictadoLite.
+`clipboard_snapshot.rs` copies supported global-memory, bitmap and enhanced
+metafile formats before any clipboard change; unsupported handles fail closed.
+`clipboard.rs` owns a separate delayed-render message thread, waits for a
+post-injection read and restores only the still-owned clipboard sequence. A new
+user copy is never overwritten. Paste requires unchanged destination focus and
+released modifiers. Failed results remain in memory for explicit recovery copy.
+Current error dialogs are temporary; the nonactivating overlay is the next stage.
 
 Inherited web/audio-cloud/history tooling has been removed from the working tree;
 upstream references remain in Git history. GPU modules are dynamically loaded so
