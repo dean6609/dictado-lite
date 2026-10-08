@@ -45,6 +45,10 @@ impl Engine {
         }
         static INIT: OnceLock<std::result::Result<(), String>> = OnceLock::new();
         let init = INIT.get_or_init(|| {
+            // SAFETY: the pinned C ABI returns a process-lifetime string.
+            if unsafe { string(sys::transcribe_version()) } != "0.2.4" {
+                return Err("Incompatible native engine version".into());
+            }
             // SAFETY: process-wide backend registration once, before model load.
             check(unsafe { sys::transcribe_init_backends_default() }).map_err(|e| e.to_string())
         });

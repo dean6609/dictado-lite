@@ -71,14 +71,37 @@ impl Worker {
                         } else {
                             Ok(())
                         };
-                        let load_ms = start.elapsed().as_millis();
+                        let mut load_ms = start.elapsed().as_millis();
                         let start = Instant::now();
-                        let result = loaded.and_then(|()| {
+                        let mut result = loaded.and_then(|()| {
                             engine
                                 .as_mut()
                                 .ok_or_else(|| Error::message("No engine"))?
                                 .run(&samples, &cancel)
                         });
+                        let mut inference_ms = start.elapsed().as_millis();
+                        // Vulkan can fail during allocation/compute after loading
+                        // successfully. Release its model before retrying on CPU.
+                        if matches!(result, Err(Error::Message(_)))
+                            && !cancel.cancelled()
+                            && engine
+                                .as_ref()
+                                .is_some_and(|e| e.backend.starts_with("Vulkan"))
+                        {
+                            engine = None;
+                            let start = Instant::now();
+                            let loaded =
+                                Engine::load(&path, Backend::Cpu).map(|value| engine = Some(value));
+                            load_ms += start.elapsed().as_millis();
+                            let start = Instant::now();
+                            result = loaded.and_then(|()| {
+                                engine
+                                    .as_mut()
+                                    .ok_or_else(|| Error::message("No CPU engine"))?
+                                    .run(&samples, &cancel)
+                            });
+                            inference_ms += start.elapsed().as_millis();
+                        }
                         let backend = engine
                             .as_ref()
                             .map(|e| e.backend.clone())
@@ -89,7 +112,7 @@ impl Worker {
                                 result,
                                 backend,
                                 load_ms,
-                                inference_ms: start.elapsed().as_millis(),
+                                inference_ms,
                             })
                             .is_err()
                         {
