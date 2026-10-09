@@ -80,7 +80,7 @@ pub fn register(root: &Path, version: &str, bytes: u64) -> Result<()> {
             link.SetPath(PCWSTR(exe.as_ptr()))?;
             link.SetWorkingDirectory(PCWSTR(cwd.as_ptr()))?;
             link.SetIconLocation(PCWSTR(exe.as_ptr()), 0)?;
-            link.SetDescription(w!("Dictado local · Ctrl+Alt+Space"))?;
+            link.SetDescription(w!("Dictado Lite · Ctrl+Space"))?;
             let path = shortcut()?;
             no_reparse(&path)?;
             fs::create_dir_all(path.parent().ok_or("Invalid shortcut directory")?)?;

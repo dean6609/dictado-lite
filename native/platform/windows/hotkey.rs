@@ -1,5 +1,5 @@
-//! Event-driven hold/release and cancellation. No keyboard polling in idle.
-use super::runtime::{WM_CANCEL, WM_RELEASE, WM_START};
+//! One toggle per shortcut press; release and auto-repeat never stop dictation.
+use super::runtime::{WM_CANCEL, WM_TOGGLE};
 use std::sync::atomic::{AtomicBool, AtomicIsize, AtomicU32, AtomicU8, Ordering};
 use windows::Win32::Foundation::*;
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
@@ -8,7 +8,7 @@ use windows::Win32::UI::WindowsAndMessaging::*;
 
 static WINDOW: AtomicIsize = AtomicIsize::new(0);
 static KEY: AtomicU32 = AtomicU32::new(0x20);
-static MODIFIERS: AtomicU8 = AtomicU8::new(6);
+static MODIFIERS: AtomicU8 = AtomicU8::new(2);
 static HOLDING: AtomicBool = AtomicBool::new(false);
 static PAUSED: AtomicBool = AtomicBool::new(false);
 static ACTIVE: AtomicBool = AtomicBool::new(false);
@@ -85,7 +85,11 @@ unsafe extern "system" fn callback(code: i32, wp: WPARAM, lp: LPARAM) -> LRESULT
         }
         if !PAUSED.load(Ordering::Acquire) && event.vkCode == KEY.load(Ordering::Acquire) {
             if up && HOLDING.swap(false, Ordering::AcqRel) {
-                let _ = PostMessageW(Some(hwnd), WM_RELEASE, WPARAM(0), LPARAM(0));
+                return LRESULT(1);
+            }
+            // Keep consuming repeats until the trigger key is released, even
+            // if Ctrl/Alt was released first. No stray spaces reach the editor.
+            if down && HOLDING.load(Ordering::Acquire) {
                 return LRESULT(1);
             }
             let mods = MODIFIERS.load(Ordering::Acquire);
@@ -94,7 +98,7 @@ unsafe extern "system" fn callback(code: i32, wp: WPARAM, lp: LPARAM) -> LRESULT
                 .all(|(bit, key)| (GetAsyncKeyState(key.0 as i32) < 0) == (mods & bit != 0));
             if down && matches {
                 if !HOLDING.swap(true, Ordering::AcqRel) {
-                    let _ = PostMessageW(Some(hwnd), WM_START, WPARAM(0), LPARAM(0));
+                    let _ = PostMessageW(Some(hwnd), WM_TOGGLE, WPARAM(0), LPARAM(0));
                 }
                 return LRESULT(1);
             }

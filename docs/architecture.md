@@ -17,17 +17,14 @@ real microphone levels. Hidden means no animation timer or drawing. It must
 respect focus, per-monitor DPI, high contrast and reduced motion. Win32 owns the
 tray and small settings dialogs. Error text uses DirectWrite.
 
-`scripts/prepare-parakeet.ps1` reduces the pinned transcribe.cpp source to Parakeet
-and shared ggml/frontend code. It excludes other family sources and registry
-entries, the legacy Whisper loader, miniz and embedded diarization. This offline
-v3 product rejects multitalker bundles. Numerical inference for the selected
-model is unchanged. The small Rust FFI owner adapts upstream MIT ownership and
-abort patterns without linking multi-family safe wrappers.
+`scripts/prepare-native.ps1` retains the full architecture registry in the pinned
+transcribe.cpp archive. The native GGUF catalog is described in [models](models.md).
+The picker/download worker publishes verified weights separately from installation.
 
 `native/audio.rs` accepts mono 16 kHz PCM16/float32 WAV for regression;
 `native/main.rs` reports cold/warm native load/run timing. SHA-256 validation is
 explicitly separate from measured native load. The installer verifies
-the pinned payload; normal loading checks size and architecture.
+the application payload; downloads verify weights and normal loading checks catalog size.
 
 `native/audio/capture.rs` opens CPAL only while recording. Its callback mixes mono
 into a two-second preallocated ring and publishes nine real RMS segments; the
@@ -54,7 +51,7 @@ modifiers; normal drawing never takes destination focus.
 Inherited web/audio-cloud/history tooling has been removed from the working tree;
 upstream references remain in Git history. GPU modules are dynamically loaded so
 absence of Vulkan can fall back to CPU. No CUDA is required. Native packaging
-stages the DLLs, applicable compiler runtimes, one model and license texts.
+stages the DLLs, applicable compiler runtimes, catalog metadata and license texts.
 `native/setup/` separates payload validation/extraction, installation ownership,
 per-user registry/shortcut integration and the small worker-driven setup UI.
 See [installer contract](installer.md).

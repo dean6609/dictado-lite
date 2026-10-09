@@ -1,5 +1,6 @@
 //! Direct2D on a tiny premultiplied BGRA DIB; no web or backdrop blur.
 use super::geometry::{Frame, BODY_HEIGHT, BODY_WIDTH, ERROR_HEIGHT, ERROR_WIDTH, PAD};
+use crate::locale::text as tr;
 use windows::core::w;
 use windows::Win32::Foundation::*;
 use windows::Win32::Graphics::{
@@ -206,7 +207,7 @@ impl Painter {
                 DWRITE_FONT_STYLE_NORMAL,
                 DWRITE_FONT_STRETCH_NORMAL,
                 13.0,
-                w!("es-CO"),
+                windows::core::PCWSTR(super::wide(tr("es", "en")).as_ptr()),
             )?;
             text.SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP)?;
             target.SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
@@ -314,9 +315,17 @@ impl Painter {
                         foreground,
                     );
                     for (label, left, right) in [
-                        (if recoverable { "Copiar" } else { "Opciones" }, 16.0, 99.0),
-                        ("Reintentar", 109.0, 202.0),
-                        ("Cerrar", 212.0, 270.0),
+                        (
+                            if recoverable {
+                                tr("Copiar", "Copy")
+                            } else {
+                                tr("Opciones", "Options")
+                            },
+                            16.0,
+                            99.0,
+                        ),
+                        (tr("Reintentar", "Retry"), 109.0, 202.0),
+                        (tr("Cerrar", "Close"), 212.0, 270.0),
                     ] {
                         self.fill(
                             rounded(PAD + left, PAD + 55.0, right - left, 24.0, 7.0),

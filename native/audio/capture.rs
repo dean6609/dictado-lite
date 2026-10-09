@@ -75,6 +75,9 @@ impl Capture {
         let collector = thread::spawn(move || {
             let mut samples = Vec::with_capacity(rate * 2);
             loop {
+                // Observe stop before draining: close() has already stopped the
+                // producer. Checking afterwards can lose the final callback's PCM.
+                let stopping = done.load(Ordering::Acquire);
                 while let Ok(sample) = consumer.pop() {
                     if samples.len() < rate * 60 * 10 {
                         samples.push(sample);
@@ -82,7 +85,7 @@ impl Capture {
                         errors.error.store(1, Ordering::Relaxed);
                     }
                 }
-                if done.load(Ordering::Acquire) {
+                if stopping {
                     break;
                 }
                 thread::sleep(Duration::from_millis(5));

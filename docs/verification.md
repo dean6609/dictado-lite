@@ -1,5 +1,8 @@
 # Verification
 
+The current changes are recorded in [0.1.1 verification](verification-0.1.1.md).
+The checkpoints below describe the original 0.1.0 baseline.
+
 ## Current coverage
 
 CI checks Rust format, clippy, invalid-audio/session-invalidation tests and Windows

@@ -7,6 +7,8 @@ pub mod audio;
 pub mod cleanup;
 pub mod config;
 pub mod engine;
+pub mod locale;
+pub mod models;
 #[cfg(windows)]
 pub mod platform;
 pub mod session;

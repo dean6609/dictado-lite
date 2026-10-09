@@ -106,7 +106,7 @@ impl Worker {
                         let mut inference_ms = start.elapsed().as_millis();
                         // Vulkan can fail during allocation/compute after loading
                         // successfully. Release its model before retrying on CPU.
-                        if matches!(result, Err(Error::Message(_)))
+                        if retry_cpu(&result, &samples)
                             && !cancel.cancelled()
                             && engine
                                 .as_ref()
@@ -210,6 +210,15 @@ impl Worker {
         }
     }
 }
+
+/// Some GPU failures return success with empty output. Retry audible input once;
+/// silence remains empty and cancellation never triggers another recognition.
+fn retry_cpu(result: &Result<String>, samples: &[f32]) -> bool {
+    matches!(result, Err(Error::Message(_)))
+        || result.as_ref().is_ok_and(|text| text.trim().is_empty())
+            && samples.iter().any(|sample| sample.abs() >= 0.005)
+}
+
 impl Drop for Worker {
     fn drop(&mut self) {
         self.cancel();
@@ -217,5 +226,18 @@ impl Drop for Worker {
         if let Some(join) = self.join.take() {
             let _ = join.join();
         }
+    }
+}
+
+#[cfg(test)]
+mod retry_tests {
+    use super::*;
+    #[test]
+    fn empty_gpu_result_retries_only_audible_input() {
+        assert!(retry_cpu(&Ok(String::new()), &[0.02, -0.02]));
+        assert!(!retry_cpu(&Ok(String::new()), &[0.0; 100]));
+        assert!(!retry_cpu(&Ok("text".into()), &[0.2]));
+        assert!(!retry_cpu(&Err(Error::Cancelled), &[0.2]));
+        assert!(retry_cpu(&Err(Error::message("compute failed")), &[0.2]));
     }
 }

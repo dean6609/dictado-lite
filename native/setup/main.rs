@@ -3,15 +3,22 @@ mod install;
 mod integration;
 mod payload;
 mod ui;
+use dictado_lite::{
+    locale::text,
+    platform::windows::{pw, wide},
+};
 use payload::Result;
 use windows::{core::PCWSTR, Win32::UI::WindowsAndMessaging::*};
-fn message(text: &str, flags: MESSAGEBOX_STYLE) -> MESSAGEBOX_RESULT {
-    let text: Vec<_> = text.encode_utf16().chain(Some(0)).collect();
+fn message(value: &str, flags: MESSAGEBOX_STYLE) -> MESSAGEBOX_RESULT {
+    let message: Vec<_> = value.encode_utf16().chain(Some(0)).collect();
     unsafe {
         MessageBoxW(
             None,
-            PCWSTR(text.as_ptr()),
-            windows::core::w!("Dictado Lite · Instalación"),
+            PCWSTR(message.as_ptr()),
+            pw(&wide(text(
+                "Dictado Lite · Instalación",
+                "Dictado Lite · Setup",
+            ))),
             flags,
         )
     }
@@ -28,7 +35,7 @@ fn run() -> Result<()> {
         install::uninstall(test)?;
         if !quiet {
             message(
-                "Dictado Lite se ha desinstalado. Tus ajustes se conservan.",
+                text("Dictado Lite se ha desinstalado. Tus ajustes se conservan.", "Dictado Lite has been uninstalled. Your settings and model cache are preserved."),
                 MB_OK | MB_ICONINFORMATION,
             );
         }
@@ -40,7 +47,10 @@ fn run() -> Result<()> {
     if args.iter().any(|a| a == "--uninstall") || (args.is_empty() && uninstall_image) {
         if quiet
             || message(
-                "¿Desinstalar Dictado Lite? Se conservarán tus ajustes.",
+                text(
+                    "¿Desinstalar Dictado Lite? Se conservarán tus ajustes.",
+                    "Uninstall Dictado Lite? Your settings and model cache will be preserved.",
+                ),
                 MB_YESNO | MB_ICONQUESTION,
             ) == IDYES
         {
@@ -56,10 +66,16 @@ fn run() -> Result<()> {
     }
     if quiet {
         let root = install::install(test, |_, _| true)?;
-        println!("{}", serde_json::json!({"installed":root,"offline":true}));
-    } else if let Some(root) = ui::run(test)? {
-        if message("Instalación completa.\n\nMantén Ctrl+Alt+Space para hablar y suelta para pegar. Escape cancela.\n\n¿Abrir Dictado Lite ahora?",MB_YESNO|MB_ICONINFORMATION)==IDYES{std::process::Command::new(root.join("dictado-lite.exe")).spawn()?;}
+        println!(
+            "{}",
+            serde_json::json!({"installed":root,"models_included":false})
+        );
+    } else if let Some((root, launch)) = ui::run(test)? {
+        if launch {
+            std::process::Command::new(root.join("dictado-lite.exe")).spawn()?;
+        }
     }
+
     Ok(())
 }
 fn main() {

@@ -1,7 +1,7 @@
 //! Single instance, message pump and tray-command routing.
 use super::{
     application::{Application, Phase},
-    hotkey, overlay, preferences, tray,
+    hotkey, models_ui, overlay, preferences, tray,
 };
 use crate::{audio::capture::microphones, config::Config};
 use std::cell::RefCell;
@@ -16,11 +16,12 @@ use windows::Win32::UI::Accessibility::*;
 use windows::Win32::UI::HiDpi::*;
 use windows::Win32::UI::WindowsAndMessaging::*;
 
-pub const WM_START: u32 = WM_APP + 1;
-pub const WM_RELEASE: u32 = WM_APP + 2;
+pub const WM_TOGGLE: u32 = WM_APP + 1;
 pub const WM_CANCEL: u32 = WM_APP + 3;
 pub const WM_TRAY: u32 = WM_APP + 4;
 const WM_MENU: u32 = WM_APP + 5;
+const WM_SHORTCUT: u32 = WM_APP + 6;
+const WM_MODELS: u32 = WM_APP + 7;
 static MENU_OPEN: AtomicBool = AtomicBool::new(false);
 static LAST_TARGET: AtomicIsize = AtomicIsize::new(0);
 static TASKBAR_CREATED: AtomicU32 = AtomicU32::new(0);
@@ -99,7 +100,9 @@ unsafe extern "system" fn procedure(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM
         }
         return LRESULT(0);
     }
-    if msg == WM_MENU || (msg == WM_TRAY && [WM_RBUTTONUP, WM_LBUTTONUP].contains(&(lp.0 as u32))) {
+    if [WM_MENU, WM_SHORTCUT, WM_MODELS].contains(&msg)
+        || (msg == WM_TRAY && [WM_RBUTTONUP, WM_LBUTTONUP].contains(&(lp.0 as u32)))
+    {
         let view = state.try_borrow().ok().map(|app| {
             (
                 app.config.clone(),
@@ -113,25 +116,54 @@ unsafe extern "system" fn procedure(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM
             return LRESULT(0);
         };
         super::diagnostics::event("menu.devices.begin");
-        let devices = microphones().unwrap_or_default();
+        let devices = if [WM_SHORTCUT, WM_MODELS].contains(&msg) {
+            Vec::new()
+        } else {
+            microphones().unwrap_or_default()
+        };
         super::diagnostics::event("menu.devices.end");
         MENU_OPEN.store(true, Ordering::Release);
-        let chosen = tray::menu(
-            owner,
-            &config,
-            recording,
-            paused,
-            copy,
-            &devices,
-            preferences::autostart(),
-        );
+        let chosen = if msg == WM_SHORTCUT {
+            tray::SHORTCUT
+        } else if msg == WM_MODELS {
+            tray::MODELS
+        } else {
+            tray::menu(
+                owner,
+                &config,
+                recording,
+                paused,
+                copy,
+                &devices,
+                preferences::autostart(),
+            )
+        };
         super::diagnostics::event(&format!("menu.selected.{chosen}"));
         MENU_OPEN.store(false, Ordering::Release);
         if GetForegroundWindow() == owner {
             let target = HWND(LAST_TARGET.load(Ordering::Acquire) as *mut _);
             let _ = SetForegroundWindow(target);
         }
-        if chosen == tray::SHORTCUT {
+        if chosen == tray::MODELS {
+            if let Ok(mut app) = state.try_borrow_mut() {
+                app.cancel();
+            }
+            hotkey::pause(true);
+            let result = models_ui::run(&config, true);
+            if let Ok(mut app) = state.try_borrow_mut() {
+                match result {
+                    Ok(Some((id, path))) => {
+                        app.config.model_id = id;
+                        app.config.choose_model = false;
+                        app.set_model(path);
+                        app.save();
+                    }
+                    Err(error) => app.fail(&error.to_string()),
+                    _ => {}
+                }
+                hotkey::pause(app.paused);
+            }
+        } else if chosen == tray::SHORTCUT {
             if let Ok(mut app) = state.try_borrow_mut() {
                 app.cancel();
             }
@@ -198,23 +230,19 @@ unsafe extern "system" fn procedure(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM
         }
         return LRESULT(0);
     }
-    if [
-        WM_START,
-        WM_RELEASE,
-        WM_CANCEL,
-        WM_TIMER,
-        WM_CLOSE,
-        WM_ENDSESSION,
-    ]
-    .contains(&msg)
-    {
+    if [WM_TOGGLE, WM_CANCEL, WM_TIMER, WM_CLOSE, WM_ENDSESSION].contains(&msg) {
         if msg == WM_CANCEL || msg == WM_CLOSE || (msg == WM_ENDSESSION && wp.0 != 0) {
             let _ = EndMenu();
         }
         if let Ok(mut app) = state.try_borrow_mut() {
             match msg {
-                WM_START => app.start(GetForegroundWindow()),
-                WM_RELEASE => app.stop(),
+                WM_TOGGLE => {
+                    if app.phase == Phase::Listening {
+                        app.stop();
+                    } else {
+                        app.start(GetForegroundWindow());
+                    }
+                }
                 WM_CANCEL => app.cancel(),
                 WM_TIMER => app.tick(MENU_OPEN.load(Ordering::Acquire)),
                 WM_CLOSE => {
@@ -248,13 +276,17 @@ pub fn run(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
                     WM_CLOSE
                 } else if args.iter().any(|arg| arg == "--menu") {
                     WM_MENU
+                } else if args.iter().any(|arg| arg == "--shortcut") {
+                    WM_SHORTCUT
+                } else if args.iter().any(|arg| arg == "--models") {
+                    WM_MODELS
                 } else {
                     0
                 };
                 if message != 0 {
                     // Sent controls reach a modal menu loop; menu display
                     // remains asynchronous to the requesting instance.
-                    let delivered = message != WM_MENU
+                    let delivered = ![WM_MENU, WM_SHORTCUT, WM_MODELS].contains(&message)
                         && SendMessageTimeoutW(
                             hwnd,
                             message,
@@ -278,10 +310,9 @@ pub fn run(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
             let _ = CloseHandle(mutex);
             return Ok(());
         }
-        if args
-            .iter()
-            .any(|arg| ["--cancel", "--exit", "--menu"].contains(&arg.as_str()))
-        {
+        if args.iter().any(|arg| {
+            ["--cancel", "--exit", "--menu", "--shortcut", "--models"].contains(&arg.as_str())
+        }) {
             if args.iter().any(|arg| arg == "--control-report") {
                 println!("{}", serde_json::json!({"instance":false}));
             }
@@ -293,12 +324,32 @@ pub fn run(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
                 .find(|pair| pair[0] == name)
                 .map(|pair| PathBuf::from(&pair[1]))
         };
-        let model = option("--model").unwrap_or(
-            std::env::current_exe()?
+        let mut config = Config::load()?;
+        let model = if let Some(path) = option("--model") {
+            path
+        } else {
+            let selected = crate::models::selected(&config.model_id);
+            let cache = selected.cache_path()?;
+            let bundled = std::env::current_exe()?
                 .parent()
                 .ok_or("Executable directory unavailable")?
-                .join("models/parakeet-tdt-0.6b-v3-Q8_0.gguf"),
-        );
+                .join("models")
+                .join(&selected.weights().filename);
+            if selected.ready(&cache) && !config.choose_model {
+                cache
+            } else if selected.ready(&bundled) && !config.choose_model {
+                bundled
+            } else {
+                let Some((id, path)) = models_ui::run(&config, config.choose_model)? else {
+                    let _ = CloseHandle(mutex);
+                    return Ok(());
+                };
+                config.model_id = id;
+                config.choose_model = false;
+                config.save()?;
+                path
+            }
+        };
         let instance = HINSTANCE(GetModuleHandleW(None)?.0);
         TASKBAR_CREATED.store(
             RegisterWindowMessageW(w!("TaskbarCreated")),
@@ -326,7 +377,6 @@ pub fn run(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
             Some(instance),
             None,
         )?;
-        let config = Config::load()?;
         let stop_after = args
             .iter()
             .find_map(|arg| arg.strip_prefix("--capture-seconds="))

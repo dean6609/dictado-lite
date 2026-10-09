@@ -1,4 +1,5 @@
 //! Nonactivating, per-monitor native pill. Hidden releases drawing resources.
+use crate::locale::text;
 mod geometry;
 mod render;
 use super::{pw, wide};
@@ -171,7 +172,7 @@ impl Overlay {
         self.view = View::Listening;
         self.levels = [0.0; 9];
         self.started = Instant::now();
-        self.name("Dictado Lite: escuchando");
+        self.name(text("Dictado Lite: escuchando", "Dictado Lite: listening"));
         self.layout()?;
         self.advance([0.0; 9])?;
         Ok(())
@@ -179,7 +180,10 @@ impl Overlay {
     pub fn processing(&mut self) -> windows::core::Result<()> {
         self.view = View::Processing;
         self.started = Instant::now();
-        self.name("Dictado Lite: reconociendo");
+        self.name(text(
+            "Dictado Lite: reconociendo",
+            "Dictado Lite: recognizing",
+        ));
         self.advance([0.0; 9])?;
         Ok(())
     }
@@ -187,7 +191,10 @@ impl Overlay {
         self.target = target;
         self.view = View::Processing;
         self.started = Instant::now();
-        self.name("Dictado Lite: reconociendo");
+        self.name(text(
+            "Dictado Lite: reconociendo",
+            "Dictado Lite: recognizing",
+        ));
         self.layout()?;
         self.advance([0.0; 9])?;
         Ok(())
@@ -195,7 +202,10 @@ impl Overlay {
     pub fn success(&mut self) -> windows::core::Result<()> {
         self.view = View::Success;
         self.started = Instant::now();
-        self.name("Dictado Lite: texto insertado");
+        self.name(text(
+            "Dictado Lite: texto insertado",
+            "Dictado Lite: text inserted",
+        ));
         self.advance([0.0; 9])?;
         Ok(())
     }
@@ -208,7 +218,11 @@ impl Overlay {
         self.target = target;
         self.view = View::Error(message.into(), recoverable);
         self.name(&format!(
-            "Dictado Lite: {message} Acciones disponibles también en la bandeja."
+            "Dictado Lite: {message} {}",
+            text(
+                "Acciones disponibles también en la bandeja.",
+                "Actions are also available in the tray."
+            )
         ));
         self.layout()?;
         self.advance([0.0; 9])?;
@@ -289,12 +303,16 @@ impl Overlay {
                 for (i, label, left, right) in [
                     (
                         0,
-                        if *recoverable { "Copiar" } else { "Opciones" },
+                        if *recoverable {
+                            text("Copiar", "Copy")
+                        } else {
+                            text("Opciones", "Options")
+                        },
                         24.0,
                         107.0,
                     ),
-                    (1, "Reintentar", 117.0, 210.0),
-                    (2, "Cerrar", 220.0, 278.0),
+                    (1, text("Reintentar", "Retry"), 117.0, 210.0),
+                    (2, text("Cerrar", "Close"), 220.0, 278.0),
                 ] {
                     let text = wide(label);
                     let scale = self.route.scale.get();

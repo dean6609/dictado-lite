@@ -4,5 +4,9 @@ Upstream: https://github.com/cjpais/Handy
 Base commit: 14f6f0d31cb22a4268acfbddba3052820fd0a06e
 
 This project is not affiliated with Handy, NVIDIA, Apple or Google.
-Original notices remain in the Git history and LICENSE.
-Parakeet weights are separate CC BY 4.0 material; see models/manifest.json.
+Original MIT notices are distributed in LICENSE and licenses/.
+The GGUF model catalog is derived from Handy's MIT-licensed catalog at
+commit f6b3f8297061acaa763a48c4cdefbbf342c814ac:
+https://github.com/cjpais/Handy/blob/f6b3f8297061acaa763a48c4cdefbbf342c814ac/src-tauri/src/catalog/catalog.json
+Model weights are downloaded separately and retain their own licenses.
+The recommended Parakeet weights are CC BY 4.0; see models/manifest.json.
