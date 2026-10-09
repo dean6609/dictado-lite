@@ -17,7 +17,7 @@ rustup override set 1.99.0-x86_64-pc-windows-gnu
 ./scripts/check.ps1
 ```
 
-Use these two commands in the same shell. If using Rust MSVC with Visual Studio,
+Run build-native.ps1 and check.ps1 in the same PowerShell session. If using Rust MSVC with Visual Studio,
 omit `-Gnu`; omit `-Vulkan` for a CPU-only native build. The scripts download tools
 and source by SHA-256, compile C++, run format/clippy/tests/release and stage DLLs.
 The first build downloads the pinned CMake/Ninja/LLVM-MinGW/Vulkan development
@@ -124,7 +124,8 @@ and private WAVs stay outside Git. No model is required for the regular checks.
 
 Read [AGENTS.md](AGENTS.md), [architecture](docs/architecture.md) and
 [verification](docs/verification.md) for the source map and behavior contracts.
-Work on a branch from current main, run the affected checks, inspect the diff,
+If you lack repository write access, fork this project and submit your pull request
+to `dean6609/dictado-lite`. Work on a branch from current main, run the affected checks, inspect the diff,
 and open a PR using the project template. Describe the trigger, resulting
 behavior, validation and limitations. AI assistance should be disclosed; it is
 not a substitute for a human approval required by repository policy.

@@ -29,8 +29,10 @@ results before insertion. Clipboard changes must preserve previous contents and
 respect target focus. Cleanup must preserve meaning and protected tokens.
 
 Work from main in small branches, run relevant checks, review the diff and current
-HEAD CI, then open a PR using the template. Only origin belongs to this project;
-never push or open PRs on upstream. Keep voice, transcripts, models and local
+HEAD CI, then open a PR using the template. Pull requests target
+`dean6609/dictado-lite`; contributor forks may use their own origin. Handy
+(`cjpais/Handy`) is a provenance reference: never publish this project's branches
+or pull requests there. Keep voice, transcripts, models and local
 measurements in ignored local/ or artifacts/. Never modify Handy settings.
 
 Update README and affected docs with each PR. Record physical Windows checks and
