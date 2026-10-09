@@ -5,16 +5,43 @@ Clone `https://github.com/dean6609/dictado-lite.git`. Use Windows x64 and Rust
 Visual Studio on Windows. A local GNU build uses the pinned LLVM-MinGW
 compiler downloaded by the bootstrap script; no compiler from another project
 is required. Both build the same Parakeet-only native source patch.
+Install [Git](https://git-scm.com/downloads/win) and [Rustup](https://rustup.rs/)
+first. A fresh clone needs the GNU Rust toolchain as well as the C++ compiler:
 
 ```powershell
+git clone https://github.com/dean6609/dictado-lite.git
+cd dictado-lite
+rustup toolchain install 1.99.0-x86_64-pc-windows-gnu --profile minimal --component rustfmt --component clippy
+rustup override set 1.99.0-x86_64-pc-windows-gnu
 ./scripts/build-native.ps1 -Vulkan -Gnu
 ./scripts/check.ps1
 ```
 
-Use these two commands in the same shell. If using Rust MSVC with Visual Studio,
+Run build-native.ps1 and check.ps1 in the same PowerShell session. If using Rust MSVC with Visual Studio,
 omit `-Gnu`; omit `-Vulkan` for a CPU-only native build. The scripts download tools
 and source by SHA-256, compile C++, run format/clippy/tests/release and stage DLLs.
-The executable opens a native tray app. Development builds use an explicit model:
+The first build downloads the pinned CMake/Ninja/LLVM-MinGW/Vulkan development
+tools and native source. They stay in ignored `.tools/`; subsequent builds reuse
+them. MSVC development/CI needs Visual Studio C++ tools and the MSVC Rust
+toolchain; consumer installer packaging currently requires GNU.
+
+The regular checks need no model. To run the app or package its installer, obtain
+the single pinned model in the same PowerShell session:
+
+```powershell
+$pin = Get-Content ./models/manifest.json -Raw | ConvertFrom-Json
+New-Item -ItemType Directory -Force ./.tools/models | Out-Null
+$model = Join-Path $PWD ('.tools/models/' + $pin.filename)
+Invoke-WebRequest "$($pin.conversion_repository)/resolve/$($pin.revision)/$($pin.filename)" -OutFile $model
+if ((Get-Item $model).Length -ne $pin.bytes -or (Get-FileHash $model).Hash -ne $pin.sha256) {
+    throw 'Pinned model integrity check failed'
+}
+./target/release/dictado-lite.exe --model $model
+```
+
+An existing copy with the same size/hash can be reused instead of downloading.
+The model is about 740 MB and stays outside Git. Development builds use an
+explicit model path; the installed app uses its bundled copy:
 
 ```powershell
 ./target/release/dictado-lite.exe --model '<model.gguf>'
@@ -39,7 +66,10 @@ No external installer compiler or administrator installation is needed.
 ./target/release/dictado-lite.exe '<model.gguf>' '<mono-16k.wav>' --verify-model --repeat=3
 ```
 
-Output is JSON with text and file-inference timing. Store private results only in
+Output is JSON with text and file-inference timing. In a GUI-subsystem release,
+use `Start-Process -Wait` with `-RedirectStandardOutput` and
+`-RedirectStandardError` to capture it reliably in PowerShell; the tested
+measure-core.ps1 launcher does this. Store private results only in
 ignored `local/`. This is not a release-to-paste measurement. Native cancellation,
 session recovery and model reload smoke (synthetic silence, no private voice):
 
@@ -94,7 +124,8 @@ and private WAVs stay outside Git. No model is required for the regular checks.
 
 Read [AGENTS.md](AGENTS.md), [architecture](docs/architecture.md) and
 [verification](docs/verification.md) for the source map and behavior contracts.
-Work on a branch from current main, run the affected checks, inspect the diff,
+If you lack repository write access, fork this project and submit your pull request
+to `dean6609/dictado-lite`. Work on a branch from current main, run the affected checks, inspect the diff,
 and open a PR using the project template. Describe the trigger, resulting
 behavior, validation and limitations. AI assistance should be disclosed; it is
 not a substitute for a human approval required by repository policy.
@@ -104,9 +135,11 @@ Review README and affected documentation against the implementation and record
 that review in the PR, even when no edits are needed. Prefer squash merge and
 delete the merged branch. Never publish this project's branches to Handy.
 
-Branch protection is unavailable for this private repository on the current
-GitHub plan (API returned 403). Keep it private and apply the same check/review
-criteria manually; do not use that limitation to merge failing or stale checks.
+The repository is public. Main requires the current `Windows checks` and
+`Vulkan release build` checks through branch protection. Review changes and
+documentation before merging and report the review actually performed. The
+initial private-repository setup received API 403 for
+protection; that historical limitation does not govern the public repository.
 
 Add `--cleanup` to the explicit WAV CLI to measure the same conservative cleanup
 used by the tray. Reports include cleanup_us; raw CLI recognition is the default.
