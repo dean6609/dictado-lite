@@ -1,57 +1,58 @@
-# Offline Windows installer
+# Lightweight Windows installer
 
-`dictado-setup.exe` is a native Rust/Win32 stub. `scripts/build-installer.ps1`
-appends the application, required native DLLs, one pinned GGUF model and license
-texts, followed by a bounded JSON index and footer. Neither installer nor app
-downloads a model or invokes Node/Python/Handy. The setup UI offers Install and
-Cancel and reports copy/hash progress from a worker. Startup remains optional/off.
+The native setup installs the application and its runtime, without model weights.
+It offers two options: download the recommended model, or choose from the GGUF
+catalog. Choice, model selection, installation/download progress and completion
+replace the content of one centered window. The selector starts with recommended
+models and offers the full catalog on request. The dialog uses Windows system
+colors consistently. Startup with Windows remains optional.
 
-![Actual packaged setup window](../assets/native-installer.jpg)
+![Actual native setup](../assets/setup-light.png)
 
-Install for the current user in `%LOCALAPPDATA%/Programs/DictadoLite`, create a
-Start Menu shortcut and a unique HKCU uninstall entry. The tiny uninstaller
-relocates itself to a unique TEMP file so Windows can release its installed image;
-that inert TEMP copy may remain until ordinary temporary-file cleanup. Settings
-under `%LOCALAPPDATA%/DictadoLite` are preserved, including on uninstall. No Handy
-or MicFilter directories, entries or settings are involved.
+Installation belongs to the current user in `%LOCALAPPDATA%/Programs/DictadoLite`.
+Setup creates a Start Menu shortcut and an HKCU uninstall entry. No administrator
+rights, Handy installation or web runtime are required. Settings and downloaded
+models live separately in `%LOCALAPPDATA%/DictadoLite` and survive uninstall.
 
-Before commit, the installer checks every staged file's SHA-256 and the compiled
-model size/hash pin. Paths are relative, bounded and reject traversal, device
-names, case duplicates and reparse ancestors. An existing nonempty directory
-without this product's marker is refused. Upgrade moves only the previous
-manifest's files into a temporary backup; a failed publication rolls those moves
-back. Uninstall deletes only manifest-listed files and empty directories,
-preserving unexpected user files. Graceful IPC closes this app; no forced process
-termination or recursive deletion is used. Cancellation stops extraction before
-commit. This is not a security boundary against a hostile process in the same
-user account, and a power loss during the brief commit can require reinstalling.
+Every embedded application file is checked against the bounded payload manifest.
+Models are refused in new installer payloads. Relative paths reject traversal,
+reserved device names, duplicates and reparse ancestors. Upgrade moves only
+previously owned files and rolls them back if publication fails. Uninstall removes
+only manifest-owned files and empty directories, preserving unexpected files.
+The model is prepared before changing an existing installation. Verified weights
+from 0.1.0 are reused in the separate cache before their old bundled copy is removed; models downloaded
+by the new application remain in its separate cache.
 
-The executable is unsigned. The adjacent whole-file SHA-256 checks download
-integrity, not publisher authentication. Distribution remains in the user's own
-public GitHub repository. Release files contain no recordings/transcripts.
+Model downloads use Windows HTTPS networking on a worker, not the UI thread.
+Each catalog entry pins its source revision, size and content hash. A partial
+file never reaches inference; cancellation or failed verification discards it.
+Verified weights are atomically published. Connection failures leave the setup or model picker open for retry. Only downloading needs Internet. Existing Handy settings
+and caches are not migrated or changed.
 
-GNU packaging includes LLVM libc++/libunwind and MinGW runtime notices; native
-MIT engine/ggml notices, Handy MIT provenance, model CC BY 4.0/attribution, resolved
-Rust crate texts and Rust standard-library notices are included. Three crates
-omit license files from their archives: pinned upstream MIT texts for dasp_sample
-and earshot are vendored; realfft's declared MIT terms and explicit upstream
-attribution/provenance are recorded without inventing a copyright year. The
-packager refuses a missing dependency license instead of shipping an incomplete
-notice set. Included Rust standard-library license texts accompany its own
-copyright inventory; they do not change this application's MIT license.
+The application and setup follow Windows' display language: Spanish or English,
+with English fallback for other locales. This does not force transcription into
+the interface language. Models requiring a language hint prefer a supported
+interface language, then English, then their first supported language; models
+with detection receive no forced language hint.
 
 Build after the native release checks:
 
 ```powershell
-./scripts/build-installer.ps1 -Model '<pinned model.gguf>'
+./scripts/build-installer.ps1
 ```
 
-Consumer packaging currently requires the verified GNU x64 build. MSVC CI still
-checks both application/setup sources; its compiler-runtime redistribution has
-not been validated as an offline consumer package, so the packager refuses it.
+The output is `artifacts/Dictado-Lite-0.1.1-Setup.exe`. No model argument or separate
+checksum download is required. Internal payload and model checks remain enabled.
+The executable is currently unsigned.
 
-Developer-only `--quiet --test` installs into the separate fixed sibling
-`DictadoLite-QA` without registry or shortcuts. `--uninstall --test --quiet` uses
-its own tiny helper. This is the same extraction/hash/upgrade/delete path as the
-normal installer. Regular CI compiles both binaries and runs payload safety tests;
-physical packaging/insertion/resource evidence is recorded separately.
+Packaging includes MIT provenance, engine/ggml/miniz notices, LLVM and MinGW
+runtime notices, resolved Rust dependency license texts and Rust standard library
+notices. Metadata and CC BY terms for the recommended model are included, but no
+weights. Other models retain separate terms on their source pages. A model's
+license is not the application's MIT license.
+
+Consumer packaging uses GNU x64; MSVC CI validates both native binaries.
+`--quiet --test` installs into a fixed separate `DictadoLite-QA` directory without
+registry/shortcuts or changing normal preferences. The same extraction and
+ownership checks apply there. Keep physical installation/UI evidence separate
+from compilation and record any untested environment.

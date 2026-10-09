@@ -4,7 +4,7 @@ Clone `https://github.com/dean6609/dictado-lite.git`. Use Windows x64 and Rust
 1.99.0 with rustfmt/clippy. Native inference needs a C++ compiler. GitHub CI uses
 Visual Studio on Windows. A local GNU build uses the pinned LLVM-MinGW
 compiler downloaded by the bootstrap script; no compiler from another project
-is required. Both build the same Parakeet-only native source patch.
+is required. Both build the full pinned native engine for the model catalog.
 Install [Git](https://git-scm.com/downloads/win) and [Rustup](https://rustup.rs/)
 first. A fresh clone needs the GNU Rust toolchain as well as the C++ compiler:
 
@@ -25,39 +25,29 @@ tools and native source. They stay in ignored `.tools/`; subsequent builds reuse
 them. MSVC development/CI needs Visual Studio C++ tools and the MSVC Rust
 toolchain; consumer installer packaging currently requires GNU.
 
-The regular checks need no model. To run the app or package its installer, obtain
-the single pinned model in the same PowerShell session:
-
-```powershell
-$pin = Get-Content ./models/manifest.json -Raw | ConvertFrom-Json
-New-Item -ItemType Directory -Force ./.tools/models | Out-Null
-$model = Join-Path $PWD ('.tools/models/' + $pin.filename)
-Invoke-WebRequest "$($pin.conversion_repository)/resolve/$($pin.revision)/$($pin.filename)" -OutFile $model
-if ((Get-Item $model).Length -ne $pin.bytes -or (Get-FileHash $model).Hash -ne $pin.sha256) {
-    throw 'Pinned model integrity check failed'
-}
-./target/release/dictado-lite.exe --model $model
-```
-
-An existing copy with the same size/hash can be reused instead of downloading.
-The model is about 740 MB and stays outside Git. Development builds use an
-explicit model path; the installed app uses its bundled copy:
+The regular checks and installer packaging need no model. Launch the application
+to download the recommended model or choose from the native catalog. The installed
+application stores weights separately from its program files. For regression
+commands you can still provide an explicit catalog model path:
 
 ```powershell
 ./target/release/dictado-lite.exe --model '<model.gguf>'
 ```
 
-Hold Ctrl+Alt+Space to speak; release to recognize and paste. Escape cancels an
+Press Ctrl+Space to start; release keeps recording. Press again to recognize and
+paste. Escape cancels an
 active session. The tray controls pause, microphone, shortcut, cleanup and optional
-Windows startup. The native overlay and offline installer are implemented.
+Windows startup. Two toggles less than 250 ms apart cancel silently. Setup
+downloads weights in its own wizard; the runtime picker handles changes and
+missing-model recovery.
 
-After checks, build the offline Windows x64 installer with the pinned weights:
+After checks, build the lightweight Windows x64 installer without weights:
 
 ```powershell
-./scripts/build-installer.ps1 -Model '<pinned model.gguf>'
+./scripts/build-installer.ps1
 ```
 
-The output is `artifacts/Dictado-Lite-0.1.0-Setup.exe` plus SHA-256. Both native
+The output is `artifacts/Dictado-Lite-0.1.1-Setup.exe`. Both native
 application and setup binaries are built by check.ps1. Keep payloads outside Git.
 Read [installer ownership and QA](docs/installer.md) before changing packaging.
 No external installer compiler or administrator installation is needed.
@@ -94,7 +84,7 @@ statistics without saving PCM. `--dictate-wav '<mono-16k.wav>' --model '<model.g
 exercises actual paste into the currently focused test editor. Use only a dedicated
 test document. Optional `--metrics-file '<local.json>'` saves anonymous timings;
 the clipboard-read receipt is a proxy, so verify the editor's actual saved text too.
-`--cancel`, `--exit` and `--menu` address the running instance. Normal use writes
+`--cancel`, `--exit`, `--menu`, `--shortcut` and `--models` address the running instance. Normal use writes
 settings only, never recordings or transcript history.
 
 Local desktop-only clipboard regression (temporarily replaces and restores the
@@ -119,7 +109,8 @@ leave it unset in normal use. It does not record microphone PCM or recognized te
 Windows ICO using build-only GDI+. `build.rs` embeds the icon, DPI/asInvoker manifest
 and version resource with LLVM windres (GNU) or the Windows SDK compiler (MSVC).
 
-The only model is pinned in [models/manifest.json](models/manifest.json). Weights
+The recommended model is pinned in [models/manifest.json](models/manifest.json);
+the full snapshot and update contract are in [docs/models.md](docs/models.md). Weights
 and private WAVs stay outside Git. No model is required for the regular checks.
 
 Read [AGENTS.md](AGENTS.md), [architecture](docs/architecture.md) and

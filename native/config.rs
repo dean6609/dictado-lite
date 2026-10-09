@@ -10,14 +10,18 @@ pub struct Config {
     pub key: u16,
     pub modifiers: u8,
     pub cleanup: bool,
+    pub model_id: String,
+    pub choose_model: bool,
 }
 impl Default for Config {
     fn default() -> Self {
         Self {
             microphone: None,
             key: 0x20,
-            modifiers: 0x06,
+            modifiers: 0x02,
             cleanup: true,
+            model_id: "parakeet-q8".into(),
+            choose_model: false,
         }
     }
 }
@@ -33,12 +37,7 @@ impl Config {
         match std::fs::read(path()?) {
             Ok(bytes) => {
                 let config: Self = serde_json::from_slice(&bytes).map_err(Error::message)?;
-                if config.key == 0
-                    || config.key > 255
-                    || config.modifiers > 7
-                    || config.key == 0x1B
-                    || (config.modifiers & 6 == 0 && !(0x70..=0x87).contains(&config.key))
-                {
+                if !valid_shortcut(config.key, config.modifiers) {
                     return Err(Error::message("Invalid shortcut configuration"));
                 }
                 Ok(config)
@@ -59,5 +58,33 @@ impl Config {
             serde_json::to_vec_pretty(self).map_err(Error::message)?,
         )
         .map_err(Error::message)
+    }
+}
+
+pub fn valid_shortcut(key: u16, modifiers: u8) -> bool {
+    key > 0
+        && key <= 255
+        && modifiers <= 7
+        && !matches!(key, 0x10..=0x12 | 0x1B | 0x5B..=0x5C | 0xA0..=0xA5)
+        && (modifiers & 6 != 0 || (0x70..=0x87).contains(&key))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn space_shortcuts_and_existing_settings() {
+        for modifiers in [2, 3, 4, 6, 7] {
+            assert!(valid_shortcut(0x20, modifiers));
+        }
+        for key in [0, 0x1B, 0x11, 0xA2, 0x5B, 256] {
+            assert!(!valid_shortcut(key, 2));
+        }
+        assert!(!valid_shortcut(0x20, 0));
+        assert!(valid_shortcut(0x70, 0));
+        let old: Config = serde_json::from_str(r#"{"key":32,"modifiers":6}"#).unwrap();
+        assert_eq!(old.modifiers, 6);
+        assert_eq!(old.model_id, "parakeet-q8");
+        assert_eq!(Config::default().modifiers, 2);
     }
 }

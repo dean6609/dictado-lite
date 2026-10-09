@@ -19,9 +19,9 @@ jobs:
           path: |
             ~/.cargo/registry
             target
-            .tools/parakeet-build-msvc-cpu
-            .tools/parakeet-msvc-cpu
-          key: windows-cpu-${{ hashFiles('Cargo.lock', 'scripts/prepare-parakeet.ps1', 'scripts/build-native.ps1', 'scripts/tool-sources.json') }}
+            .tools/catalog-build-msvc-cpu
+            .tools/catalog-msvc-cpu
+          key: windows-cpu-${{ hashFiles('Cargo.lock', 'scripts/prepare-native.ps1', 'scripts/build-native.ps1', 'scripts/tool-sources.json') }}
       - name: Format, lint, tests and release
         shell: pwsh
         run: |
@@ -52,9 +52,9 @@ jobs:
           path: |
             ~/.cargo/registry
             target
-            .tools/parakeet-build-msvc-vulkan
-            .tools/parakeet-msvc-vulkan
-          key: windows-vulkan-${{ hashFiles('Cargo.lock', 'scripts/prepare-parakeet.ps1', 'scripts/build-native.ps1', 'scripts/tool-sources.json') }}
+            .tools/catalog-build-msvc-vulkan
+            .tools/catalog-msvc-vulkan
+          key: windows-vulkan-${{ hashFiles('Cargo.lock', 'scripts/prepare-native.ps1', 'scripts/build-native.ps1', 'scripts/tool-sources.json') }}
       - name: Build Vulkan with CPU fallback
         shell: pwsh
         run: |

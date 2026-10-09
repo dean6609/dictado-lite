@@ -1,6 +1,7 @@
 //! UI-thread coordinator; inference, audio collection and clipboard pumping are
 //! separate owners. Only the current, uncancelled session can reach insertion.
 use super::{clipboard::Paste, hotkey, input, overlay::Overlay, tray::Tray};
+use crate::locale::text as tr;
 use crate::{
     audio::{self, capture::Capture},
     cleanup::{Conservative, TextCleaner},
@@ -77,8 +78,12 @@ impl Application {
             stop_after,
             began: None,
             recognition: None,
-            trigger: "microphone-release",
+            trigger: "microphone-toggle",
         })
+    }
+    pub fn set_model(&mut self, path: PathBuf) {
+        self.cancel();
+        self.worker = Worker::start(path, Backend::PreferVulkan);
     }
     fn begin(&mut self, target: HWND) -> Option<u64> {
         if self.phase == Phase::Finishing {
@@ -99,7 +104,7 @@ impl Application {
         self.recognition = None;
         self.released = None;
         self.trigger_unix_ms = None;
-        self.trigger = "microphone-release";
+        self.trigger = "microphone-toggle";
         hotkey::active(Some(id));
         Some(id)
     }
@@ -133,7 +138,10 @@ impl Application {
             Ok(_) => {
                 self.phase = Phase::Processing;
                 if self.overlay.processing_at(target).is_err() {
-                    self.fail("No se pudo mostrar el indicador de actividad.");
+                    self.fail(tr(
+                        "No se pudo mostrar el indicador de actividad.",
+                        "Could not display the activity indicator.",
+                    ));
                     return;
                 }
                 self.timer();
@@ -142,6 +150,15 @@ impl Application {
         }
     }
     pub fn stop(&mut self) {
+        // A tap is not a recording request. Avoid inference and an empty-text
+        // error when the operator releases before microphone startup completes.
+        if self
+            .began
+            .is_some_and(|at| at.elapsed() < Duration::from_millis(250))
+        {
+            self.cancel();
+            return;
+        }
         let Some(capture) = self.capture.take() else {
             return;
         };
@@ -158,7 +175,10 @@ impl Application {
             Ok(_) => {
                 self.phase = Phase::Processing;
                 if self.overlay.processing().is_err() {
-                    self.fail("No se pudo mostrar el indicador de actividad.");
+                    self.fail(tr(
+                        "No se pudo mostrar el indicador de actividad.",
+                        "Could not display the activity indicator.",
+                    ));
                     return;
                 }
                 self.timer();
@@ -238,7 +258,10 @@ impl Application {
                     self.injected = false;
                     self.phase = Phase::Pasting;
                 }
-                Ok(_) => self.fail("No se detectó texto. Vuelve a intentarlo."),
+                Ok(_) => self.fail(tr(
+                    "Sin texto. Revisa el micrófono y vuelve a dictar.",
+                    "No text. Check your microphone and try dictating again.",
+                )),
                 Err(error) => self.fail(&error.to_string()),
             }
         }
@@ -311,7 +334,10 @@ impl Application {
                 .unwrap_or([0.0; 9]);
             match self.overlay.advance(levels) {
                 Ok(false) if self.phase == Phase::Finishing => self.phase = Phase::Idle,
-                Err(_) => self.fail("No se pudo mostrar el indicador de actividad."),
+                Err(_) => self.fail(tr(
+                    "No se pudo mostrar el indicador de actividad.",
+                    "Could not display the activity indicator.",
+                )),
                 _ => {}
             }
         }
@@ -345,7 +371,10 @@ impl Application {
             self.phase = Phase::Pasting;
             self.injected = false;
             if self.overlay.processing_at(target).is_err() {
-                self.fail("No se pudo mostrar el indicador de actividad.");
+                self.fail(tr(
+                    "No se pudo mostrar el indicador de actividad.",
+                    "Could not display the activity indicator.",
+                ));
                 return;
             }
             self.timer();
@@ -379,19 +408,43 @@ impl Application {
         self.cancel();
         self.last_text = retained;
         let message = if self.last_text.is_some() {
-            "No se confirmó el pegado. El texto sigue disponible."
+            tr(
+                "No se confirmó el pegado. El texto sigue disponible.",
+                "Paste was not confirmed. Your text is still available.",
+            )
         } else if error.contains("micrófono") || error.to_lowercase().contains("microphone") {
-            "El micrófono no está disponible. Revisa la selección."
+            tr(
+                "El micrófono no está disponible. Revisa la selección.",
+                "Microphone unavailable. Check the selected input.",
+            )
         } else if error.to_lowercase().contains("model") || error.contains("GGUF") {
-            "No se encontró el modelo. Reinstala Dictado Lite."
-        } else if error.contains("No se detectó texto") {
-            "No se detectó texto. Vuelve a intentarlo."
+            tr(
+                "Modelo no disponible. Abre Modelos en la bandeja y vuelve a descargarlo.",
+                "Model unavailable. Open Models from the tray and download it again.",
+            )
+        } else if error.contains("No se detectó texto")
+            || error.contains("No text")
+            || error.contains("Sin texto")
+        {
+            tr(
+                "Sin texto. Revisa el micrófono y vuelve a dictar.",
+                "No text. Check your microphone and try dictating again.",
+            )
         } else if error.contains("indicador") {
-            "No se pudo mostrar el indicador de actividad."
+            tr(
+                "No se pudo mostrar el indicador de actividad.",
+                "Could not display the activity indicator.",
+            )
         } else if error.contains("ajustes") {
-            "No se pudieron guardar los ajustes. Reintenta."
+            tr(
+                "No se pudieron guardar los ajustes. Reintenta.",
+                "Could not save settings. Please try again.",
+            )
         } else {
-            "No se pudo completar el dictado. Reintenta."
+            tr(
+                "No se pudo completar el dictado. Reintenta.",
+                "Could not complete dictation. Please try again.",
+            )
         };
         if self
             .overlay

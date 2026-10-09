@@ -13,7 +13,7 @@ if ($Gnu) {
     $env:RUSTFLAGS = '-C linker-flavor=ld -C link-self-contained=yes'
 }
 if ($Vulkan) { $env:VULKAN_SDK = Join-Path $toolsRoot 'vulkan' }
-$sourceRoot = Join-Path $toolsRoot 'parakeet-source/transcribe-cpp-sys-0.2.4'
+$sourceRoot = Join-Path $toolsRoot 'catalog-source/transcribe-cpp-sys-0.2.4'
 if (!(Test-Path $sourceRoot)) {
     $archive = Join-Path $toolsRoot 'transcribe-cpp-sys-0.2.4.crate'
     if (!(Test-Path $archive)) { Invoke-WebRequest 'https://crates.io/api/v1/crates/transcribe-cpp-sys/0.2.4/download' -OutFile $archive }
@@ -22,11 +22,11 @@ if (!(Test-Path $sourceRoot)) {
     tar -xzf $archive -C (Split-Path $sourceRoot -Parent)
     if ($LASTEXITCODE -ne 0) { throw 'Native source extraction failed' }
 }
-& (Join-Path $PSScriptRoot 'prepare-parakeet.ps1') -SourceRoot $sourceRoot
+& (Join-Path $PSScriptRoot 'prepare-native.ps1') -SourceRoot $sourceRoot
 $flavor = if ($Gnu) { 'gnu' } else { 'msvc' }
 $gpu = if ($Vulkan) { 'vulkan' } else { 'cpu' }
-$buildRoot = Join-Path $toolsRoot "parakeet-build-$flavor-$gpu"
-$prefix = Join-Path $toolsRoot "parakeet-$flavor-$gpu"
+$buildRoot = Join-Path $toolsRoot "catalog-build-$flavor-$gpu"
+$prefix = Join-Path $toolsRoot "catalog-$flavor-$gpu"
 $arguments = @('-S', $sourceRoot, '-B', $buildRoot, '-DCMAKE_BUILD_TYPE=Release', '-DTRANSCRIBE_INSTALL=ON', '-DTRANSCRIBE_BUILD_SHARED=ON', '-DTRANSCRIBE_GGML_BACKEND_DL=ON', '-DTRANSCRIBE_BUILD_TESTS=OFF', '-DTRANSCRIBE_BUILD_EXAMPLES=OFF', '-DTRANSCRIBE_BUILD_TOOLS=OFF', '-DTRANSCRIBE_USE_SYSTEM_BLAS=OFF', '-DTRANSCRIBE_X86_CONSERVATIVE=ON', '-DGGML_CPU_ALL_VARIANTS=OFF')
 $arguments += if ($Vulkan) { '-DTRANSCRIBE_VULKAN=ON' } else { '-DTRANSCRIBE_VULKAN=OFF' }
 if ($Gnu) { $arguments += @('-G', 'Ninja', '-DCMAKE_C_COMPILER=x86_64-w64-mingw32-clang', '-DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-clang++') }

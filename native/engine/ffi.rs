@@ -1,5 +1,5 @@
 //! Minimal safe owner over the existing MIT transcribe.cpp C ABI.
-use super::{Error, Result, MODEL_BYTES};
+use super::{Error, Result};
 use std::ffi::{c_char, c_void, CStr, CString};
 use std::path::Path;
 use std::ptr::NonNull;
@@ -33,6 +33,7 @@ pub struct Engine {
     model: NonNull<sys::transcribe_model>,
     session: NonNull<sys::transcribe_session>,
     pub backend: String,
+    language: Option<CString>,
 }
 // SAFETY: unique ownership; every compute call requires &mut self. The worker
 // moves the engine but never exposes it concurrently to another thread.
@@ -40,8 +41,8 @@ unsafe impl Send for Engine {}
 
 impl Engine {
     pub fn load(path: &Path, backend: Backend) -> Result<Self> {
-        if std::fs::metadata(path).map_err(Error::message)?.len() != MODEL_BYTES {
-            return Err(Error::message("Unexpected Parakeet model size"));
+        if !crate::models::for_path(path)?.ready(path) {
+            return Err(Error::message("Model size mismatch"));
         }
         static INIT: OnceLock<std::result::Result<(), String>> = OnceLock::new();
         let init = INIT.get_or_init(|| {
@@ -74,6 +75,11 @@ impl Engine {
     }
 
     fn load_on(path: &Path, backend: sys::transcribe_backend_request) -> Result<Self> {
+        let language = crate::models::for_path(path)?
+            .language_hint()
+            .map(CString::new)
+            .transpose()
+            .map_err(Error::message)?;
         let path = path
             .to_str()
             .ok_or_else(|| Error::message("Model path is not UTF-8"))?;
@@ -91,10 +97,6 @@ impl Engine {
                 &mut model,
             ))?;
             let model = NonNull::new(model).ok_or_else(|| Error::message("Null model"))?;
-            if string(sys::transcribe_model_arch_string(model.as_ptr())) != "parakeet" {
-                sys::transcribe_model_free(model.as_ptr());
-                return Err(Error::message("Only Parakeet is supported"));
-            }
             let mut params = std::mem::zeroed();
             sys::transcribe_session_params_init(&mut params);
             let mut session = std::ptr::null_mut();
@@ -114,6 +116,7 @@ impl Engine {
                 model,
                 session,
                 backend: string(sys::transcribe_model_backend(model.as_ptr())),
+                language,
             })
         }
     }
@@ -135,6 +138,9 @@ impl Engine {
             );
             let mut params = std::mem::zeroed();
             sys::transcribe_run_params_init(&mut params);
+            if let Some(language) = &self.language {
+                params.language = language.as_ptr();
+            }
             let status =
                 sys::transcribe_run(self.session.as_ptr(), samples.as_ptr(), count, &params);
             sys::transcribe_set_abort_callback(self.session.as_ptr(), None, std::ptr::null_mut());

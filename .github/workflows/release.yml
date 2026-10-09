@@ -1,0 +1,54 @@
+name: Lightweight Windows package
+on:
+  pull_request:
+    paths:
+      - 'native/**'
+      - 'models/**'
+      - 'licenses/**'
+      - 'scripts/**'
+      - 'Cargo.*'
+      - 'assets/**'
+      - '.github/workflows/release.yml'
+  workflow_dispatch:
+  push:
+    tags: ['dictado-v*']
+permissions:
+  contents: read
+jobs:
+  package:
+    name: Light installer
+    runs-on: windows-2025
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Rust GNU
+        shell: pwsh
+        run: |
+          rustup toolchain install 1.99.0-x86_64-pc-windows-gnu --profile minimal --component rustfmt --component clippy
+          rustup override set 1.99.0-x86_64-pc-windows-gnu
+      - name: Build and verify package without weights
+        shell: pwsh
+        run: |
+          ./scripts/build-native.ps1 -Vulkan -Gnu
+          ./scripts/check.ps1
+          ./scripts/build-installer.ps1
+          ./scripts/smoke-installer.ps1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: Dictado-Lite-Windows-x64
+          path: artifacts/*-Setup.exe
+      - name: Draft release for a merged version tag
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = (cargo metadata --no-deps --format-version 1 | ConvertFrom-Json).packages[0].version
+          if ($env:GITHUB_REF_NAME -ne "dictado-v$version") { throw 'Tag must match the package version' }
+          git merge-base --is-ancestor $env:GITHUB_SHA origin/main
+          if ($LASTEXITCODE -ne 0) { throw 'Release commit must have been merged into main' }
+          gh release create $env:GITHUB_REF_NAME artifacts/*-Setup.exe --draft --verify-tag --title "Dictado Lite $version · Windows x64" --notes-file docs/release-notes.md
+          if ($LASTEXITCODE -ne 0) { throw 'Draft release failed' }

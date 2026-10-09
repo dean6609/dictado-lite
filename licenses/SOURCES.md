@@ -19,3 +19,7 @@
 - Model: exact pin, conversion attribution and source links in models/manifest.json.
 
 These notices retain third-party ownership; no third-party authorship is claimed.
+
+- miniz 3.1.1: full MIT license from src/third_party/miniz/LICENSE in the pinned
+  transcribe-cpp-sys archive; upstream commit d10b03cc73475af673df40f06e5cefd1d5f940d9.
+- Handy model catalog: MIT ownership/source in NOTICE and docs/models.md.

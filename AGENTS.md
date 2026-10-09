@@ -1,39 +1,35 @@
-# Working on Dictado Lite
+# Working in this repository
 
-Read CONTRIBUTING.md and docs/architecture.md first. This independent MIT project
-contains a native application derived from Handy; upstream contribution policies do not apply here.
+Start with CONTRIBUTING.md and docs/architecture.md. Check the working tree,
+current branch and remotes before editing or publishing changes.
 
-Commands (Windows PowerShell): `./scripts/check.ps1` runs format, clippy, tests and
-release compilation. `./scripts/dev-env.ps1` selects the isolated local toolchain
-when present; otherwise use Rust 1.99.0 from PATH. Run `./scripts/build-native.ps1`
-in the same shell first (local GNU adds `-Gnu`, GPU adds `-Vulkan`). See CONTRIBUTING.
+## Find the owner of a change
 
-Source map: `native/engine/` owns the C ABI, worker and model lifetime;
-`native/session.rs` rejects invalidated results; `native/audio.rs` reads regression
-WAVs; `native/audio/` captures and resamples PCM; `native/config.rs` owns separate
-settings. `native/cleanup.rs` owns text cleanup and protected-content cases.
-`native/platform/windows/` owns tray, shortcut, focus, clipboard and UI
-coordination. `overlay/` contains placement, Direct2D rendering and the window
-bridge; `assets/` and `build.rs` own icon/manifest resources. `diagnostics.rs`
-writes only when explicit DICTADO_UI_TRACE is set. `native/main.rs` selects the
-tray or explicit regression CLI.
-`native/setup/` owns the offline installer, payload validation, narrow file
-operations and per-user Windows integration. Review product-root/manifest/reparse
-guards and rollback/preservation before changing it. `scripts/build-installer.ps1`
-assembles the verified model and all dependency notices. `scripts/` builds the native engine;
-`models/manifest.json` pins weights; `docs/` describes contracts and verification.
-Upstream audio/resampling/insertion references remain available in Git history.
+- Application entry points and orchestration live in `native/`.
+- Recognition and worker lifetime live in `native/engine/`.
+- Recording and sample preparation live in `native/audio/`.
+- Platform integration and interface code live in `native/platform/`.
+- Installation and removal live in `native/setup/`.
+- Build and packaging commands live in `scripts/`.
+- Download metadata lives in `models/`; original notices live in `licenses/`.
+- Explanations, contracts and verification evidence live in `docs/`.
 
-Keep audio callbacks free of blocking/file work. Cancellation must invalidate
-results before insertion. Clipboard changes must preserve previous contents and
-respect target focus. Cleanup must preserve meaning and protected tokens.
+Follow the affected module's callers and tests before changing its contract.
+Keep related behavior together and isolate blocking work from interface and audio
+callbacks. Prefer existing abstractions; add dependencies for concrete needs.
 
-Work from main in small branches, run relevant checks, review the diff and current
-HEAD CI, then open a PR using the template. Pull requests target
-`dean6609/dictado-lite`; contributor forks may use their own origin. Handy
-(`cjpais/Handy`) is a provenance reference: never publish this project's branches
-or pull requests there. Keep voice, transcripts, models and local
-measurements in ignored local/ or artifacts/. Never modify Handy settings.
+## Implement and verify
 
-Update README and affected docs with each PR. Record physical Windows checks and
-resource measurements separately from CI; compilation alone proves neither.
+Work on a focused branch from current main. Preserve unrelated changes and user
+data. Keep private inputs, transcripts, downloads and build artifacts outside
+version control. Validate external input before publishing files or results.
+
+Use the commands in CONTRIBUTING.md. Test meaningful behavior and failure paths;
+compilation alone does not prove an interface or installation works. For visible
+changes, inspect the real application and capture reviewable evidence. Describe
+what was checked and what still needs physical verification.
+
+Update affected documentation to match the implementation. Review the diff,
+retain applicable third-party attribution, and open a pull request using the
+repository template. Publish only to the intended project remote. Verify checks
+for the current PR commit and follow the repository's review/merge policy.

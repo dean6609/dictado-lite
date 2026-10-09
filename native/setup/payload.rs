@@ -89,29 +89,16 @@ pub fn open(path: &Path) -> Result<(File, Manifest)> {
     file.read_exact(&mut json)?;
     let manifest: Manifest = serde_json::from_slice(&json)?;
     validate(&manifest)?;
-    let pin: serde_json::Value = serde_json::from_str(include_str!("../../models/manifest.json"))?;
-    let model = format!(
-        "models/{}",
-        pin["filename"]
-            .as_str()
-            .ok_or("Invalid compiled model pin")?
-    );
-    if manifest
-        .files
-        .iter()
-        .filter(|e| e.name.ends_with(".gguf"))
-        .count()
-        != 1
-        || !manifest.files.iter().any(|e| {
-            e.name == model
-                && Some(e.bytes) == pin["bytes"].as_u64()
-                && Some(e.sha256.as_str()) == pin["sha256"].as_str()
-        })
+    if manifest.files.iter().any(|e| e.name.ends_with(".gguf"))
         || [
             "dictado-lite.exe",
             "dictado-uninstall.exe",
             "LICENSE",
             "licenses/CC-BY-4.0.txt",
+            "NOTICE",
+            "THIRD_PARTY_NOTICES.md",
+            "models/catalog.json",
+            "models/recommended.json",
         ]
         .iter()
         .any(|name| !manifest.files.iter().any(|e| e.name == *name))

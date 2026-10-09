@@ -36,6 +36,34 @@ fn main() {
 }
 fn run() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    #[cfg(windows)]
+    if args.first().is_some_and(|arg| arg == "--download-model") {
+        let key = args.get(1).ok_or("Specify a catalog model key")?;
+        let model = dictado_lite::models::catalog()
+            .iter()
+            .find(|m| m.key() == *key)
+            .ok_or("Unknown catalog model")?;
+        let cancel_after = args
+            .iter()
+            .find_map(|a| a.strip_prefix("--cancel-after-bytes="))
+            .map(str::parse::<u64>)
+            .transpose()?;
+        let result = dictado_lite::models::download(model, |done, _| {
+            cancel_after.is_none_or(|limit| done < limit)
+        });
+        match result {
+            Ok(path) => {
+                dictado_lite::models::verify(&path, model.weights())?;
+                println!(
+                    "{}",
+                    serde_json::json!({"model":model.key(),"verified":true,"bytes":model.weights().size_bytes})
+                );
+            }
+            Err(engine::Error::Cancelled) => println!("{}", serde_json::json!({"cancelled":true})),
+            Err(error) => return Err(error.into()),
+        }
+        return Ok(());
+    }
     if args.first().is_some_and(|arg| arg == "--list-microphones") {
         use cpal::traits::{DeviceTrait, HostTrait};
         let host = cpal::default_host();
