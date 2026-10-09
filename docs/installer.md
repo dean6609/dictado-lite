@@ -28,7 +28,7 @@ user account, and a power loss during the brief commit can require reinstalling.
 
 The executable is unsigned. The adjacent whole-file SHA-256 checks download
 integrity, not publisher authentication. Distribution remains in the user's own
-private GitHub repository. Release files contain no recordings/transcripts.
+public GitHub repository. Release files contain no recordings/transcripts.
 
 GNU packaging includes LLVM libc++/libunwind and MinGW runtime notices; native
 MIT engine/ggml notices, Handy MIT provenance, model CC BY 4.0/attribution, resolved

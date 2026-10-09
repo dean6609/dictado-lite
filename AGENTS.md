@@ -1,7 +1,7 @@
 # Working on Dictado Lite
 
 Read CONTRIBUTING.md and docs/architecture.md first. This independent MIT project
-is being extracted from Handy; upstream contribution policies do not apply here.
+contains a native application derived from Handy; upstream contribution policies do not apply here.
 
 Commands (Windows PowerShell): `./scripts/check.ps1` runs format, clippy, tests and
 release compilation. `./scripts/dev-env.ps1` selects the isolated local toolchain
