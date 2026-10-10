@@ -47,7 +47,8 @@ origin; the upstream Handy remote is for reference.
 ## Publish a release
 
 Follow [the release checklist](docs/releasing.md). Merging a pull request does not
-publish an installer: a matching version tag builds a draft release, which must
-be inspected and published. Actions runs only for release tags or a manual
-dispatch, with cached tools and native engine. Commits and PRs launch no automated
-verification. Keep the app version, tag and installer filename aligned.
+publish an installer. Launch the installer workflow manually from `main`, with
+an existing version tag, to create a draft for inspection and publication.
+Tools and the native engine are cached on `main` for reuse between versions.
+Commits, PRs and tags launch no automatic workflows. Keep the app version, tag
+and installer filename aligned.
