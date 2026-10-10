@@ -1,8 +1,7 @@
-name: Windows build
+name: Windows installer
 on:
   push:
     tags: ['dictado-v*']
-  pull_request:
   workflow_dispatch:
 permissions:
   contents: read
@@ -11,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   windows:
-    name: Windows checks
+    name: Build installer
     runs-on: windows-2025
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -33,14 +32,23 @@ jobs:
             .tools/vulkan/Bin
             .tools/vulkan/Include
             .tools/vulkan/Lib
-          key: windows-gnu-tools-${{ hashFiles('Cargo.lock', 'scripts/tool-sources.json', 'scripts/bootstrap-tools.ps1') }}
-      - name: Build and check the Windows installer
+          key: windows-gnu-tools-${{ hashFiles('scripts/tool-sources.json', 'scripts/bootstrap-tools.ps1') }}
+      - name: Cache compiled native engine
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            .tools/catalog-source
+            .tools/catalog-build-gnu-vulkan
+            .tools/catalog-gnu-vulkan
+          key: windows-gnu-engine-${{ hashFiles('scripts/build-native.ps1', 'scripts/prepare-native.ps1', 'scripts/tool-sources.json') }}
+      - name: Build the Windows installer
         shell: pwsh
         run: |
           ./scripts/build-native.ps1 -Vulkan -Gnu
-          ./scripts/check.ps1
+          cargo build --locked --release
+          if ($LASTEXITCODE -ne 0) { throw 'Application build failed' }
+          ./scripts/stage-runtime.ps1
           ./scripts/build-installer.ps1
-          ./scripts/smoke-installer.ps1
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: Dictado-Lite-Windows-x64

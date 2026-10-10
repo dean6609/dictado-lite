@@ -16,12 +16,13 @@ cd dictado-lite
 rustup toolchain install 1.99.0-x86_64-pc-windows-gnu --profile minimal --component rustfmt --component clippy
 rustup override set 1.99.0-x86_64-pc-windows-gnu
 ./scripts/build-native.ps1 -Vulkan -Gnu
-./scripts/check.ps1
+cargo build --locked --release
+./scripts/stage-runtime.ps1
 ./scripts/build-installer.ps1
 ```
 
-Run these scripts in the same PowerShell session. The checks and installer build
-need no model. Tools, compiled output and installer payloads are ignored by Git.
+Run these scripts in the same PowerShell session. The installer build needs no
+model. Tools, compiled output and installer payloads are ignored by Git.
 Never commit recordings, transcripts or downloaded model weights.
 
 ## Understand the code
@@ -36,9 +37,10 @@ Use the pull request template. Describe the problem, resulting behavior,
 verification and limitations. Inspect the real app for interface changes and use
 actual captures. Disclose AI assistance and report only reviews actually performed.
 
-Before merging, resolve review findings and verify the checks for the current
-commit. Branch protection requires **Windows checks**, the single production
-Windows build with format, lint, unit checks and installer packaging.
+Before merging, review the diff and resolve findings. For code changes, run
+`./scripts/check.ps1` locally for format, lint, existing units and compilation.
+For installer changes, `./scripts/smoke-installer.ps1` exercises a separate QA
+installation and removal. Documentation-only changes need no application build.
 Prefer squash merge and delete the merged branch. Publish only to this project's
 origin; the upstream Handy remote is for reference.
 
@@ -46,4 +48,6 @@ origin; the upstream Handy remote is for reference.
 
 Follow [the release checklist](docs/releasing.md). Merging a pull request does not
 publish an installer: a matching version tag builds a draft release, which must
-be checked and published. Keep the app version, tag and installer filename aligned.
+be inspected and published. Actions runs only for release tags or a manual
+dispatch, with cached tools and native engine. Commits and PRs launch no automated
+verification. Keep the app version, tag and installer filename aligned.

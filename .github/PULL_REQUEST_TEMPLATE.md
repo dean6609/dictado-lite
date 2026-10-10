@@ -2,9 +2,9 @@
 
 <!-- What problem does this solve, and how does the behavior change? -->
 
-## Checks
+## Review
 
-<!-- Relevant checks and any remaining limitations. Use actual app captures for visual changes. -->
+<!-- Describe the review and relevant local checks for code changes. Documentation-only changes need no app build. -->
 
 - [ ] Reviewed the README and affected documentation.
 
