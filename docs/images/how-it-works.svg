@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="330" viewBox="0 0 1200 330" role="img" aria-labelledby="title description">
+  <title id="title">How Dictado Lite works</title>
+  <desc id="description">Three steps: press Ctrl + Space, speak while the indicator shows your microphone level, press again and the text appears where you were typing.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#202226"/><stop offset="1" stop-color="#0C0D10"/>
+    </linearGradient>
+    <linearGradient id="key" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#2C2F36"/><stop offset="1" stop-color="#1A1C21"/>
+    </linearGradient>
+    <linearGradient id="pillBody" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#202226"/><stop offset="1" stop-color="#0C0D10"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop stop-color="#BAB8FF" stop-opacity=".45"/>
+      <stop offset=".42" stop-color="#73D4F5" stop-opacity=".13"/>
+      <stop offset="1" stop-color="#8CB3F2" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="pearl">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset=".45" stop-color="#E0F5FF"/>
+      <stop offset="1" stop-color="#A3B8ED"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="330" rx="24" fill="url(#background)"/>
+  <rect x=".5" y=".5" width="1199" height="329" rx="23.5" fill="none" stroke="#D1D9ED" stroke-opacity=".14"/>
+
+  <g fill="#FFFFFF" fill-opacity=".025" stroke="#D1D9ED" stroke-opacity=".10">
+    <rect x="30" y="30" width="360" height="270" rx="18"/>
+    <rect x="420" y="30" width="360" height="270" rx="18"/>
+    <rect x="810" y="30" width="360" height="270" rx="18"/>
+  </g>
+  <g fill="none" stroke="#97A0B3" stroke-opacity=".6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M401 117l7 8-7 8"/>
+    <path d="M791 117l7 8-7 8"/>
+  </g>
+
+  <!-- Step 1: shortcut -->
+  <g font-family="Segoe UI, Inter, Arial, sans-serif" text-anchor="middle">
+    <rect x="60" y="97" width="90" height="56" rx="10" fill="url(#key)" stroke="#D1D9ED" stroke-opacity=".22"/>
+    <text x="105" y="132" font-size="18" fill="#E8EDFA">Ctrl</text>
+    <text x="170" y="133" font-size="22" fill="#97A0B3">+</text>
+    <rect x="190" y="97" width="170" height="56" rx="10" fill="url(#key)" stroke="#D1D9ED" stroke-opacity=".22"/>
+    <text x="275" y="132" font-size="18" fill="#E8EDFA">Space</text>
+  </g>
+
+  <!-- Step 2: the native indicator geometry, scaled 2x, with live microphone bars -->
+  <g transform="translate(488 91) scale(2)">
+    <rect x="-2" y="2" width="116" height="38" rx="19" fill="#000000" opacity=".16"/>
+    <rect width="112" height="34" rx="17" fill="url(#pillBody)" stroke="#D1D9ED" stroke-opacity=".22" stroke-width=".7"/>
+    <circle cx="25" cy="17" r="15" fill="url(#glow)"/>
+    <circle cx="25" cy="17" r="3.2" fill="url(#pearl)"/>
+    <g fill="#D4DEF2" opacity=".9">
+      <rect x="45" y="14.5" width="2.2" height="5" rx="1.1"/>
+      <rect x="49.5" y="12" width="2.2" height="10" rx="1.1"/>
+      <rect x="54" y="8.5" width="2.2" height="17" rx="1.1"/>
+      <rect x="58.5" y="10.5" width="2.2" height="13" rx="1.1"/>
+      <rect x="63" y="7" width="2.2" height="20" rx="1.1"/>
+      <rect x="67.5" y="9.5" width="2.2" height="15" rx="1.1"/>
+      <rect x="72" y="12.5" width="2.2" height="9" rx="1.1"/>
+      <rect x="76.5" y="11" width="2.2" height="12" rx="1.1"/>
+      <rect x="81" y="14.5" width="2.2" height="5" rx="1.1"/>
+    </g>
+  </g>
+
+  <!-- Step 3: text in the editor -->
+  <rect x="855" y="80" width="270" height="90" rx="10" fill="#0C0D10" fill-opacity=".7" stroke="#D1D9ED" stroke-opacity=".18"/>
+  <rect x="878" y="101" width="130" height="6" rx="3" fill="#D4DEF2" fill-opacity=".14"/>
+  <text x="1097" y="145" text-anchor="end" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="18" fill="#E8EDFA">Send the draft by Friday.</text>
+  <rect x="1101" y="127" width="2" height="24" rx="1" fill="#BAB8FF"/>
+
+  <g font-family="Segoe UI, Inter, Arial, sans-serif" text-anchor="middle">
+    <g font-size="11" letter-spacing="2.2" fill="#97A0B3">
+      <text x="210" y="218">STEP 1</text>
+      <text x="600" y="218">STEP 2</text>
+      <text x="990" y="218">STEP 3</text>
+    </g>
+    <g font-size="22" font-weight="600" fill="#E8EDFA">
+      <text x="210" y="250">Press the shortcut</text>
+      <text x="600" y="250">Speak</text>
+      <text x="990" y="250">Press it again</text>
+    </g>
+    <g font-size="14" fill="#AEB8CA">
+      <text x="210" y="276">Your cursor stays where it is</text>
+      <text x="600" y="276">Recognized on your PC</text>
+      <text x="990" y="276">The text appears where you type</text>
+    </g>
+  </g>
+</svg>
