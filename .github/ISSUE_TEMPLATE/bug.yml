@@ -14,7 +14,7 @@ body:
     validations:
       required: true
   - type: textarea
-    id: evidence
+    id: details
     attributes:
-      label: Safe evidence
+      label: Additional details or screenshot (optional)
       description: Do not upload private voice, dictation text, credentials or device identifiers.

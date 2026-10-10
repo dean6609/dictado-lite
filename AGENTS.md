@@ -1,35 +1,19 @@
 # Working in this repository
 
-Start with CONTRIBUTING.md and docs/architecture.md. Check the working tree,
-current branch and remotes before editing or publishing changes.
+Read CONTRIBUTING.md and docs/architecture.md, then check the working tree,
+branch and remotes. Use the architecture map to find the affected module and
+follow its callers before editing.
 
-## Find the owner of a change
+Keep changes focused. Prefer the existing structure and abstractions. Keep
+blocking work off interface and audio callbacks. Preserve unrelated changes,
+user data and third-party attribution. Keep private inputs, downloaded models,
+build tools and artifacts outside version control.
 
-- Application entry points and orchestration live in `native/`.
-- Recognition and worker lifetime live in `native/engine/`.
-- Recording and sample preparation live in `native/audio/`.
-- Platform integration and interface code live in `native/platform/`.
-- Installation and removal live in `native/setup/`.
-- Build and packaging commands live in `scripts/`.
-- Download metadata lives in `models/`; original notices live in `licenses/`.
-- Explanations, contracts and verification evidence live in `docs/`.
+Use the build and check commands in CONTRIBUTING.md. Choose checks that exercise
+the behavior being changed; do not add redundant tests or compatibility matrices.
+Inspect actual application behavior for interface changes. State what was checked
+and any unresolved limitation without adding permanent reports for routine work.
 
-Follow the affected module's callers and tests before changing its contract.
-Keep related behavior together and isolate blocking work from interface and audio
-callbacks. Prefer existing abstractions; add dependencies for concrete needs.
-
-## Implement and verify
-
-Work on a focused branch from current main. Preserve unrelated changes and user
-data. Keep private inputs, transcripts, downloads and build artifacts outside
-version control. Validate external input before publishing files or results.
-
-Use the commands in CONTRIBUTING.md. Test meaningful behavior and failure paths;
-compilation alone does not prove an interface or installation works. For visible
-changes, inspect the real application and capture reviewable evidence. Describe
-what was checked and what still needs physical verification.
-
-Update affected documentation to match the implementation. Review the diff,
-retain applicable third-party attribution, and open a pull request using the
-repository template. Publish only to the intended project remote. Verify checks
-for the current PR commit and follow the repository's review/merge policy.
+Update documentation when the behavior or structure changes. Review the diff,
+open a pull request to the intended origin and follow the review/merge policy.
+Keep guidance general; put implementation-specific metadata beside its owner.

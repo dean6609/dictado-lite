@@ -16,6 +16,9 @@
   archives selected by Cargo.lock during packaging, accompanied by generated
   RUST-DEPENDENCIES.txt in the installer. Build-only dependencies are also listed.
 - transcribe.cpp and ggml: exact native MIT notices retained in this directory.
+  Native source is transcribe-cpp-sys 0.2.4, upstream commit
+  4807edaf210d0d7e8a6f7fb2a44b65966a2797f0. scripts/build-native.ps1 pins
+  the crates.io archive hash; scripts/prepare-native.ps1 applies its header fix.
 - Model: exact pin, conversion attribution and source links in models/manifest.json.
 
 These notices retain third-party ownership; no third-party authorship is claimed.
