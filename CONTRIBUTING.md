@@ -23,6 +23,7 @@ cargo build --locked --release
 
 Run these scripts in the same PowerShell session. The installer build needs no
 model. Tools, compiled output and installer payloads are ignored by Git.
+Everything builds locally; forks need no GitHub Actions or repository access.
 Never commit recordings, transcripts or downloaded model weights.
 
 ## Understand the code

@@ -5,73 +5,67 @@
 [![Download for Windows](https://img.shields.io/badge/Download_for_Windows-202226?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/dean6609/dictado-lite/releases/latest)
 [![Latest release](https://img.shields.io/github/v/release/dean6609/dictado-lite?style=for-the-badge&color=31343A&label=release)](https://github.com/dean6609/dictado-lite/releases/latest)
 
-**Local voice typing, wherever you write.**
+**Type with your voice in any app on Windows.**<br>
+Press a shortcut, speak, and your words appear where your cursor is.<br>
+Everything runs on your PC — no account, no subscription, nothing stored.
 
-A small native Windows app that turns your voice into text in the focused editor.
-No account. No subscription. No recordings or transcript history.
-
-[Getting started](#getting-started) · [How it works](#how-it-works) · [Contributing](CONTRIBUTING.md)
+[How it works](#how-it-works) · [Install](#install) · [Models](docs/models.md) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
 ## How it works
 
-Place your cursor where you want to write. Press **Ctrl + Space**, speak, then
-press **Ctrl + Space** again. Dictado Lite recognizes your speech on your PC,
-inserts the text and dismisses the indicator. **Escape** cancels.
+<img src="docs/images/how-it-works.svg" alt="Step 1: press Ctrl + Space. Step 2: speak. Step 3: press Ctrl + Space again and the text appears where you type." width="100%">
 
-<p align="center">
-  <img src="docs/images/recording.jpg" alt="Actual Dictado Lite recording indicator, with microphone activity bars" width="312">
-  <br>
-  <sub>The real recording indicator, enlarged for readability. Captured in inspection mode.</sub>
-</p>
+1. Click where you want to write — an email, a document, a chat.
+2. Press **Ctrl + Space** and speak. You can let go of the keys.
+3. Press **Ctrl + Space** again. Your words are typed in.
 
-Release the keys while you speak. Change the shortcut, microphone or model from
-the system tray. Previously saved shortcuts are kept when you upgrade.
+Press **Esc** to cancel. Everything else — shortcut, microphone, model —
+lives in the tray icon next to the clock.
 
-## Getting started
+## Install
 
 1. Download **Dictado-Lite-0.1.1-Setup.exe** from the [latest release](https://github.com/dean6609/dictado-lite/releases/latest).
-2. Choose the recommended model, or browse the downloadable models. Setup shows
-   recommended choices first; the full catalog is one click away.
-3. Open an editor and press **Ctrl + Space** to start.
+2. Run it and pick a speech model. The recommended one works well for most
+   people; you can switch later.
+3. Open any app and press **Ctrl + Space**.
 
-The installer is approximately **55 MiB** and contains **no model weights**.
-Setup downloads your chosen model once. Recognition works offline afterward.
-Models are kept separately and reused across updates.
+Setup downloads the model once (about 705 MiB for the recommended one). After
+that, recognition works offline. No administrator rights are needed.
 
-## Built to stay out of your way
+> [!NOTE]
+> The installer is not code-signed yet, so Windows may show a SmartScreen
+> warning. Choose **More info → Run anyway** to continue.
 
-- **On-device recognition.** Audio stays on your PC; processing runs locally.
-  Internet is needed to download models from Hugging Face.
-- **A native Windows interface.** A compact indicator, a tray menu and small
-  settings dialogs. No web runtime or separate account to manage.
-- **System language.** English and Spanish follow your Windows display language;
-  other languages use English for now.
-- **Your setup, your choice.** An editable shortcut, selectable microphone,
-  optional text cleanup and optional startup with Windows.
-- **Text recovery.** If insertion fails or the destination changes, copy the
-  recognized result from the indicator or tray.
+## What you get
 
-Requires **Windows x64**. Vulkan acceleration is used when available, with CPU
-fallback. Memory, disk space, supported languages and speed depend on the model;
-the recommended download is about **705 MiB**. Installation is per user and does
-not require administrator rights. The installer is currently unsigned.
+|  |  |
+| --- | --- |
+| 🔒 **Private** | Your voice is processed on your PC and never saved. Internet is only used to download models. |
+| 🪶 **Light** | A ~55 MiB native app with a tiny indicator and a tray menu. The model is unloaded when you stop using it. |
+| 🎛️ **Yours** | Change the shortcut, microphone and model. Optional text cleanup and start with Windows. |
+| 🛟 **Safe** | If the window changed or the text could not be typed, copy it from the indicator or the tray. |
+| 🌐 **Bilingual** | The interface follows your Windows language: English or Spanish. |
 
-[Available models](docs/models.md)
+**Requirements:** Windows x64. A graphics card with Vulkan makes recognition
+faster, but the CPU works too. Memory, speed and supported languages depend on
+the model you choose — see [available models](docs/models.md).
 
-## For contributors
+## Build it yourself
 
-Start with [CONTRIBUTING.md](CONTRIBUTING.md) for build commands and GitHub Flow.
-The [architecture map](docs/architecture.md) explains the modules and application
-flow. [AGENTS.md](AGENTS.md) provides general guidance for coding assistants.
+Clone the repository and build everything on your own computer — no special
+access or cloud service required. [CONTRIBUTING.md](CONTRIBUTING.md) has the
+commands, and the [architecture map](docs/architecture.md) explains how the
+pieces fit. Coding assistants should start with [AGENTS.md](AGENTS.md).
 
 ## License and credits
 
-Application code is [MIT licensed](LICENSE), derived from [Handy](https://github.com/cjpais/Handy),
-with the native transcribe.cpp / ggml engine. Original attribution is retained in
-[NOTICE](NOTICE) and [third-party notices](THIRD_PARTY_NOTICES.md).
+Application code is [MIT licensed](LICENSE) and derived from
+[Handy](https://github.com/cjpais/Handy), using the native transcribe.cpp / ggml
+engine. Original attribution is kept in [NOTICE](NOTICE) and the
+[third-party notices](THIRD_PARTY_NOTICES.md).
 
-Downloaded models have their own licenses. The recommended NVIDIA Parakeet v3
-model is CC BY 4.0; handy-computer provides its GGUF conversion. Model details
-link to each source and its terms. Model weights are not bundled in the installer.
+Speech models are downloaded separately and keep their own licenses. The
+recommended NVIDIA Parakeet v3 model is CC BY 4.0, converted to GGUF by
+handy-computer. No model weights are included in the installer.
