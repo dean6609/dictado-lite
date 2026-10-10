@@ -2,8 +2,8 @@
 
 <img src="docs/images/hero.svg" alt="Dictado Lite — Speak. Press. Keep writing." width="100%">
 
-[![Download for Windows](https://img.shields.io/badge/Download_for_Windows-181B24?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/dean6609/dictado-lite/releases/latest)
-[![Latest release](https://img.shields.io/github/v/release/dean6609/dictado-lite?style=for-the-badge&color=818CF8&label=release)](https://github.com/dean6609/dictado-lite/releases/latest)
+[![Download for Windows](https://img.shields.io/badge/Download_for_Windows-202226?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/dean6609/dictado-lite/releases/latest)
+[![Latest release](https://img.shields.io/github/v/release/dean6609/dictado-lite?style=for-the-badge&color=31343A&label=release)](https://github.com/dean6609/dictado-lite/releases/latest)
 
 **Local voice typing, wherever you write.**
 
