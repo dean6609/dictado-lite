@@ -1,67 +1,40 @@
-# Logs
-logs
+# Build tools and generated output
+/.tools/
+/target/
+**/target/
+/artifacts/
+
+# Private inputs, diagnostics and downloads
+/local/
+/pruebas_audio/
+logs/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-package-lock.json
-
-node_modules
-dist
-dist-ssr
 *.local
 *.local.*
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-.claude/
-
-/target/
 recording_*
-.crush/
-
-# Playwright
-playwright-report/
-test-results/
-blob-report/
-
-.direnv
-.envrc
-
-# Nix build output
-result
-
-# Python bytecode (scripts/)
-__pycache__/
-
-# Independent project: private inputs and build tools never enter Git.
-/.tools/
-/local/
-/artifacts/
-**/target/
 *.gguf
 *.bin
 *.mp3
 *.flac
 *.wav
 *.dmp
+
+# Credentials and local environment
 .env
 .env.*
 *.pem
 *.key
-/pruebas_audio/
-/DEVELOPMENT_PLAN.md
-/LITE_DESIGN.md
-/NEXT_CHAT_PROMPT.md
+.direnv/
+.envrc
+
+# Editor and operating-system files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.sw?
+__pycache__/
+.claude/
+.crush/

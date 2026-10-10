@@ -3,7 +3,8 @@
 Handy source/history: MIT, copyright 2025 CJ Pais; full notice in LICENSE.
 transcribe.cpp/transcribe-cpp-sys 0.2.4: MIT, copyright 2026 transcribe.cpp authors.
 ggml: MIT, copyright 2023–2026 ggml authors. Exact texts are in licenses/.
-The full native engine is built from the pinned archive; provenance is in docs/provenance.md.
+The full native engine is built from the pinned archive; its source is recorded in
+licenses/SOURCES.md and scripts/tool-sources.json.
 miniz 3.1.1: MIT, copyright RAD Game Tools/Valve Software and Rich Geldreich/
 Tenacious Software LLC; full notice in licenses/miniz-LICENSE.txt.
 

@@ -1,91 +1,91 @@
 <div align="center">
 
-# Dictado Lite
+<img src="docs/images/hero.svg" alt="Dictado Lite — Speak. Press. Keep writing." width="100%">
 
-**Tu voz, directamente donde escribes.**
+[![Download for Windows](https://img.shields.io/badge/Download_for_Windows-181B24?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/dean6609/dictado-lite/releases/latest)
+[![Latest release](https://img.shields.io/github/v/release/dean6609/dictado-lite?style=for-the-badge&color=818CF8&label=release)](https://github.com/dean6609/dictado-lite/releases/latest)
 
-[![Windows](https://img.shields.io/badge/Windows-x64-0078D4?logo=windows)](https://github.com/dean6609/dictado-lite/releases)
-[![Licencia MIT](https://img.shields.io/badge/Código-MIT-green)](LICENSE)
-[![Verificación](https://github.com/dean6609/dictado-lite/actions/workflows/native.yml/badge.svg)](https://github.com/dean6609/dictado-lite/actions/workflows/native.yml)
+**Local voice typing, wherever you write.**
 
-[Descargar para Windows](https://github.com/dean6609/dictado-lite/releases/latest) · [Instalación](docs/installer.md) · [Contribuir](CONTRIBUTING.md)
+A small native Windows app that turns your voice into text in the focused editor.
+No account. No subscription. No recordings or transcript history.
+
+[Getting started](#getting-started) · [How it works](#how-it-works) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
-Pulsa **Ctrl+Espacio** para empezar, habla y pulsa de nuevo para insertar el texto. **Escape** cancela.
-Una pequeña barra indica la actividad del micrófono y un menú en la bandeja
-reúne los ajustes. El reconocimiento se ejecuta en tu equipo.
+## How it works
 
-![Barra real de Dictado Lite escuchando el micrófono](assets/native-pill-listening.jpg)
+Place your cursor where you want to write. Press **Ctrl + Space**, speak, then
+press **Ctrl + Space** again. Dictado Lite recognizes your speech on your PC,
+inserts the text and dismisses the indicator. **Escape** cancels.
 
-## Empieza en tres pasos
+<p align="center">
+  <img src="docs/images/recording.jpg" alt="Actual Dictado Lite recording indicator, with microphone activity bars" width="312">
+  <br>
+  <sub>The real recording indicator, enlarged for readability. Captured in inspection mode.</sub>
+</p>
 
-1. Descarga el archivo **Setup.exe** del release e instala para tu usuario.
-2. En el mismo instalador, descarga **Parakeet v3**, el recomendado, o elige un
-   modelo. Primero verás recomendados; puedes abrir la lista completa.
-3. Coloca el cursor donde quieres escribir y pulsa **Ctrl+Espacio**. Pulsa otra vez para terminar.
+Release the keys while you speak. Change the shortcut, microphone or model from
+the system tray. Previously saved shortcuts are kept when you upgrade.
 
-El setup no lleva modelos preinstalados: los descarga durante la instalación.
-Solo necesitas Internet para descargar un modelo. Después puedes dictar sin
-conexión, sin cuenta ni suscripción. Los modelos se guardan separados de la
-aplicación y se reutilizan al actualizarla. La versión publicada 0.1.0 incluye
-el modelo; la instalación ligera corresponde a la siguiente versión 0.1.1.
+## Getting started
 
-## La aplicación, tal como es
+1. Download **Dictado-Lite-0.1.1-Setup.exe** from the [latest release](https://github.com/dean6609/dictado-lite/releases/latest).
+2. Choose the recommended model, or browse the downloadable models. Setup shows
+   recommended choices first; the full catalog is one click away.
+3. Open an editor and press **Ctrl + Space** to start.
 
-| Instala solo lo necesario | Elige cómo reconocer tu voz |
-| --- | --- |
-| ![Instalador nativo con dos opciones de descarga](assets/setup-light.png) | ![Selector nativo con el catálogo de Handy](assets/models.png) |
+The installer is approximately **55 MiB** and contains **no model weights**.
+Setup downloads your chosen model once. Recognition works offline afterward.
+Models are kept separately and reused across updates.
 
-![Diálogo real que permite guardar Ctrl+Espacio](assets/shortcut.png)
+<p align="center">
+  <img src="docs/images/setup.png" alt="Actual centered setup wizard offering a recommended download or model selection" width="640">
+  <br>
+  <sub>One setup window, from your first choice through installation.</sub>
+</p>
 
-Las capturas muestran ventanas del ejecutable real. La barra de escucha se
-capturó en modo de inspección; el uso habitual no añade una ventana a la barra
-de tareas. No se utilizan maquetas del programa.
+<p align="center">
+  <img src="docs/images/models.png" alt="Actual model selection page, showing recommended choices and access to all models" width="640">
+  <br>
+  <sub>Choose a recommendation, or open the complete model catalog.</sub>
+</p>
 
-## A tu manera
+Screenshots show the actual Windows application in Spanish. The interface follows
+your Windows display language: English and Spanish are supported, with English
+as the fallback for other languages.
 
-- **Atajo editable:** Ctrl+Espacio de inicio; también admite otras combinaciones.
-  Los atajos guardados de instalaciones anteriores se conservan.
-- **Micrófono seleccionable:** predeterminado de Windows o un dispositivo concreto.
-- **Idioma del sistema:** interfaz en español o inglés según el idioma de Windows;
-  los demás idiomas utilizan inglés por ahora.
-- **Modelos de Handy:** recomendados al principio y un botón para abrir el catálogo completo.
-  Puedes cambiarlo desde **Modelos…** en la bandeja.
-- **Controles sencillos:** pausar, limpieza básica opcional e inicio con Windows.
-- **Recuperación del texto:** si cambia el destino o falla el pegado, puedes copiar
-  el resultado desde la barra o la bandeja.
+## Built to stay out of your way
 
-Soltar el atajo mantiene la grabación. Una segunda pulsación la termina.
-Dos pulsaciones separadas por menos de 250 ms se descartan sin error. Si hablas y no aparece texto,
-comprueba el dispositivo en **Micrófono** y que las barras respondan a tu voz.
+- **On-device recognition.** Audio stays on your PC; processing runs locally.
+  Internet is needed to download models from Hugging Face.
+- **A native Windows interface.** A compact indicator, a tray menu and small
+  settings dialogs. No web runtime or separate account to manage.
+- **Your setup, your choice.** An editable shortcut, selectable microphone,
+  optional text cleanup and optional startup with Windows.
+- **Text recovery.** If insertion fails or the destination changes, copy the
+  recognized result from the indicator or tray.
 
-## Privacidad y requisitos
+Requires **Windows x64**. Vulkan acceleration is used when available, with CPU
+fallback. Memory, disk space, supported languages and speed depend on the model;
+the recommended download is about **705 MiB**. Installation is per user and does
+not require administrator rights. The installer is currently unsigned.
 
-Windows x64. Vulkan cuando está disponible, con respaldo por CPU. No necesitas
-instalar Handy ni un navegador integrado. La descarga de pesos se realiza desde
-Hugging Face; el audio y el reconocimiento permanecen en tu equipo. La aplicación
-no guarda grabaciones ni historial de transcripciones.
+[Available models](docs/models.md)
 
-El espacio, memoria, idiomas y rendimiento dependen del modelo elegido. El
-recomendado ocupa aproximadamente 705 MiB; los modelos grandes requieren más
-recursos. Consulta los [resultados verificados y sus límites](docs/verification.md).
+## For contributors
 
-## Modificar y contribuir
+Start with [CONTRIBUTING.md](CONTRIBUTING.md) for build commands and GitHub Flow.
+The [architecture map](docs/architecture.md) explains the modules and application
+flow. [AGENTS.md](AGENTS.md) provides general guidance for coding assistants.
 
-El proyecto utiliza **GitHub Flow**: rama corta, cambios revisables, verificaciones
-y pull request a `main`. [CONTRIBUTING.md](CONTRIBUTING.md) contiene los comandos.
-[AGENTS.md](AGENTS.md) orienta a asistentes de programación;
-[arquitectura](docs/architecture.md) explica los módulos y sus contratos.
+## License and credits
 
-## Licencias y créditos
+Application code is [MIT licensed](LICENSE), derived from [Handy](https://github.com/cjpais/Handy),
+with the native transcribe.cpp / ggml engine. Original attribution is retained in
+[NOTICE](NOTICE) and [third-party notices](THIRD_PARTY_NOTICES.md).
 
-El código de Dictado Lite es [MIT](LICENSE), derivado de
-[Handy](https://github.com/cjpais/Handy). Se conservan sus atribuciones y las del
-motor transcribe.cpp, ggml y las dependencias en [NOTICE](NOTICE) y
-[avisos de terceros](THIRD_PARTY_NOTICES.md).
-
-Los pesos tienen **licencias propias**. Parakeet v3 es CC BY 4.0: NVIDIA es el
-autor del modelo y handy-computer realizó la conversión GGUF y cuantización.
-Otros modelos pueden tener términos distintos. Puedes consultar sus términos
-en la página de origen desde «Detalles del modelo». No se incluyen pesos en el setup nuevo.
+Downloaded models have their own licenses. The recommended NVIDIA Parakeet v3
+model is CC BY 4.0; handy-computer provides its GGUF conversion. Model details
+link to each source and its terms. Model weights are not bundled in the installer.

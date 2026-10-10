@@ -1,16 +1,29 @@
-Lightweight native Windows dictation. The setup contains the application and
-runtime only. Its centered wizard downloads the recommended Parakeet v3 model or
-lets you choose a model, showing recommended choices before the full catalog. Models remain local after downloading.
+## Dictado Lite 0.1.1
 
-Press Ctrl+Space to start recording; press again to recognize and insert the
-text. Escape cancels. The shortcut is editable, including combinations with
-Space. Existing saved shortcuts are preserved.
+A smaller installer and simpler voice typing for Windows x64.
 
-The native tray, shortcut dialog, setup and model picker follow Windows' display
-language (Spanish/English, English fallback for other locales). Model weights
-have separate licenses documented in the catalog and linked model details; application code remains MIT with
-original Handy and native dependency attribution.
+### What's new
 
-Download the single Setup.exe asset. No model bundle or separate checksum file
-is required. See the repository's verification document for the checks performed
-and remaining physical-device limitations. The executable is currently unsigned.
+- **Ctrl + Space toggle:** press once to start, press again to recognize and
+  insert your text. Releasing the keys keeps recording. Escape cancels.
+- **Editable shortcut:** combinations with Space can now be captured and saved.
+  Previously saved shortcuts are preserved.
+- **Lightweight setup:** approximately 55 MiB, with no bundled model weights.
+  Download the recommended Parakeet v3 model or choose another downloadable model.
+  Recommended choices appear first, with access to the full catalog.
+- **One centered setup window:** selection, downloads and installation share
+  the same wizard, with consistent Windows system colors.
+- **System language:** setup, tray and settings follow the Windows display
+  language. English and Spanish are supported, with English fallback.
+- **Offline recognition:** models are downloaded once, stored separately and
+  reused across updates. Audio is processed locally.
+
+### Download
+
+Download **Dictado-Lite-0.1.1-Setup.exe**, run it and choose your model.
+Existing installations can be updated with the same setup. No administrator
+rights are required. Settings and downloaded models survive uninstall.
+
+Windows x64 is required. Vulkan acceleration is used when available, with CPU
+fallback. Model disk and memory requirements vary. The installer is currently
+unsigned. Application code is MIT; downloaded models have their own licenses.

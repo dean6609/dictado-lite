@@ -1,24 +1,11 @@
-## Problem and result
+## Changes
 
-<!-- Concrete trigger, behavior before/after, scope. -->
+<!-- What problem does this solve, and how does the behavior change? -->
 
-## Verification and baseline
+## Checks
 
-<!-- Commands/results for the current commit, resource comparisons when relevant. -->
+<!-- Relevant checks and any remaining limitations. Use actual app captures for visual changes. -->
 
-## Windows and visual evidence
+- [ ] Reviewed the README and affected documentation.
 
-<!-- Real executable evidence when applicable; explicitly list pending manual checks. -->
-
-## Documentation review
-
-- [ ] Reviewed README and affected CONTRIBUTING/AGENTS/docs against implementation.
-<!-- List edits or explain why no update was needed. -->
-
-## Limitations and review
-
-<!-- Risks, unresolved checks, actual review performed. Never invent human approval. -->
-
-## AI assistance
-
-<!-- Name tools and scope of assistance, if used. -->
+<!-- If AI tools helped, describe their contribution briefly. -->
