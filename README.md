@@ -40,28 +40,14 @@ The installer is approximately **55 MiB** and contains **no model weights**.
 Setup downloads your chosen model once. Recognition works offline afterward.
 Models are kept separately and reused across updates.
 
-<p align="center">
-  <img src="docs/images/setup.png" alt="Actual centered setup wizard offering a recommended download or model selection" width="640">
-  <br>
-  <sub>One setup window, from your first choice through installation.</sub>
-</p>
-
-<p align="center">
-  <img src="docs/images/models.png" alt="Actual model selection page, showing recommended choices and access to all models" width="640">
-  <br>
-  <sub>Choose a recommendation, or open the complete model catalog.</sub>
-</p>
-
-Screenshots show the actual Windows application in Spanish. The interface follows
-your Windows display language: English and Spanish are supported, with English
-as the fallback for other languages.
-
 ## Built to stay out of your way
 
 - **On-device recognition.** Audio stays on your PC; processing runs locally.
   Internet is needed to download models from Hugging Face.
 - **A native Windows interface.** A compact indicator, a tray menu and small
   settings dialogs. No web runtime or separate account to manage.
+- **System language.** English and Spanish follow your Windows display language;
+  other languages use English for now.
 - **Your setup, your choice.** An editable shortcut, selectable microphone,
   optional text cleanup and optional startup with Windows.
 - **Text recovery.** If insertion fails or the destination changes, copy the
