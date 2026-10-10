@@ -1,2 +1,7 @@
 # Vendored license/copyright notices retain upstream bytes and whitespace.
 licenses/** -text -whitespace
+
+# Dependency notices and documentation are not application source.
+licenses/** linguist-vendored
+docs/** linguist-documentation
+models/catalog.json linguist-vendored
