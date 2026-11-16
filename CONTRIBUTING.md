@@ -41,9 +41,16 @@ cargo build --locked --release
 ```
 
 The first build compiles the engine from the crate sources, which takes a few
-minutes. The result is one static binary: CPU recognition on Linux, Metal with
-CPU fallback on macOS. These systems get the terminal commands only; the tray
-application, global shortcut and text insertion are Windows code.
+minutes. The result is one static binary tuned for the build machine: CPU
+recognition on Linux, Metal with CPU fallback on macOS. These systems get the
+terminal commands only; the tray application, global shortcut and text
+insertion are Windows code.
+
+`./scripts/package-unix.sh` builds the portable release package for the
+current system in `artifacts/`: on Linux, shared engine libraries with one CPU
+module per instruction-set tier, so it runs on other processors; on macOS, the
+static Metal binary. Each package carries `install.sh`, which installs into
+`~/.local` for the current user (`--prefix`, `--uninstall`).
 
 ## Understand the code
 
@@ -73,8 +80,8 @@ origin; the upstream Handy remote is for reference.
 ## Publish a release
 
 Follow [the release checklist](docs/releasing.md). Merging a pull request does not
-publish an installer. Launch the installer workflow manually from `main`, with
+publish a package. Launch the installer workflow manually from `main`, with
 an existing version tag, to run the checks and create a draft for inspection
 and publication. Tools and the native engine are cached on `main` for reuse
 between versions. Commits, PRs and tags launch no automatic installer build.
-Keep the app version, tag and installer filename aligned.
+Keep the app version, tag and package filenames aligned.

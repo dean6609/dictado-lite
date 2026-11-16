@@ -5,3 +5,6 @@ licenses/** -text -whitespace
 licenses/** linguist-vendored
 docs/** linguist-documentation
 models/catalog.json linguist-vendored
+
+# Shell scripts run on Linux and macOS.
+*.sh text eol=lf

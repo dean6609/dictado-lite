@@ -19,7 +19,7 @@ struct Measurement {
 const USAGE: &str = "Usage:
   dictado-lite <model.gguf> <mono-16k.wav> [--cpu] [--verify-model] [--cleanup] [--repeat=N] [--idle-after=N]
   dictado-lite --record [--model <model.gguf>] [--microphone <name>] [--seconds=N] [--cpu] [--raw]
-  dictado-lite --download-model <catalog-key>
+  dictado-lite --download-model [<catalog-key>]
   dictado-lite --list-microphones | --capture-probe [--microphone <name>]";
 
 fn main() {
@@ -59,19 +59,34 @@ fn option(args: &[String], name: &str) -> Option<String> {
 fn run() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     if args.first().is_some_and(|arg| arg == "--download-model") {
-        let key = args.get(1).ok_or("Specify a catalog model key")?;
-        let model = dictado_lite::models::catalog()
-            .iter()
-            .find(|m| m.key() == *key)
-            .ok_or("Unknown catalog model")?;
+        // Without a key, fetch the model the settings select (the recommended
+        // one on a fresh install), so installers need no model list of their own.
+        let model = match args.get(1).filter(|arg| !arg.starts_with("--")) {
+            Some(key) => dictado_lite::models::catalog()
+                .iter()
+                .find(|m| m.key() == *key)
+                .ok_or("Unknown catalog model")?,
+            None => dictado_lite::models::selected(&dictado_lite::config::Config::load()?.model_id),
+        };
         let cancel_after = args
             .iter()
             .find_map(|a| a.strip_prefix("--cancel-after-bytes="))
             .map(str::parse::<u64>)
             .transpose()?;
-        let result = dictado_lite::models::download(model, |done, _| {
+        // Progress goes to a terminal only; the result line stays plain JSON.
+        let show = std::io::IsTerminal::is_terminal(&std::io::stderr());
+        let mut shown = None;
+        let result = dictado_lite::models::download(model, |done, total| {
+            let percent = done * 100 / total.max(1);
+            if show && shown != Some(percent) {
+                shown = Some(percent);
+                eprint!("\rDownloading {}: {percent}%", model.weights().filename);
+            }
             cancel_after.is_none_or(|limit| done < limit)
         });
+        if shown.is_some() {
+            eprintln!();
+        }
         match result {
             Ok(path) => {
                 dictado_lite::models::verify(&path, model.weights())?;
