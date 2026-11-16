@@ -12,8 +12,14 @@ concurrency:
   group: windows-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  checks:
+    name: Checks
+    uses: ./.github/workflows/check.yml
+    with:
+      ref: ${{ inputs.release_tag || github.ref }}
   windows:
     name: Build installer
+    needs: checks
     runs-on: windows-2025
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683

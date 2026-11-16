@@ -26,7 +26,7 @@ lives in the tray icon next to the clock.
 
 ## Install
 
-1. Download **Dictado-Lite-0.1.1-Setup.exe** from the [latest release](https://github.com/dean6609/dictado-lite/releases/latest).
+1. Download **Dictado-Lite-0.2.0-Setup.exe** from the [latest release](https://github.com/dean6609/dictado-lite/releases/latest).
 2. Run it and pick a speech model. The recommended one works well for most
    people; you can switch later.
 3. Open any app and press **Ctrl + Space**.
@@ -44,13 +44,44 @@ that, recognition works offline. No administrator rights are needed.
 | --- | --- |
 | 🔒 **Private** | Your voice is processed on your PC and never saved. Internet is only used to download models. |
 | 🪶 **Light** | A ~55 MiB native app with a tiny indicator and a tray menu. The model is unloaded when you stop using it. |
-| 🎛️ **Yours** | Change the shortcut, microphone and model. Optional text cleanup and start with Windows. |
+| 🎛️ **Yours** | Change the shortcut, microphone and model. Optional text cleanup, your own word list and start with Windows. |
 | 🛟 **Safe** | If the window changed or the text could not be typed, copy it from the indicator or the tray. |
 | 🌐 **Bilingual** | The interface follows your Windows language: English or Spanish. |
 
 **Requirements:** Windows x64. A graphics card with Vulkan makes recognition
 faster, but the CPU works too. Memory, speed and supported languages depend on
 the model you choose — see [available models](docs/models.md).
+
+## Pauses, punctuation and your own words
+
+Speech models close a sentence whenever you pause. Cleanup (on by default in
+the tray menu) keeps one mark per pause, drops marks before the first word and
+rejoins a sentence that was split before a connecting word such as *y*,
+*porque*, *and* or *because*.
+
+English names and technical terms inside Spanish speech are often spelled the
+way they sound. Teach the app your words: create `replacements.txt` next to
+the settings (`%LOCALAPPDATA%DictadoLite` on Windows) with one line per
+phrase, and the recognized phrase is replaced whole-word, case-insensitively:
+
+```text
+# heard = written
+hit have = GitHub
+pul request = pull request
+```
+
+If you mix Spanish and English often, switch to **Qwen3-ASR 0.6B** from the
+tray: in our tests it kept English terms (*deploy*, *staging*, *pull request*)
+and did not split sentences at pauses, at about twice the recognition time of
+Parakeet on the CPU. Whisper also detects languages.
+
+## Linux and macOS
+
+The same code builds on Linux and macOS as a terminal tool: `dictado-lite
+--record` records from the microphone until you press Enter, recognizes
+locally and prints the text, so you can pipe it into `wl-copy`, `xclip` or
+`pbcopy`. The tray application, the global shortcut and typing into other
+apps are Windows only. Build steps are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Build it yourself
 

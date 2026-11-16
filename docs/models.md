@@ -27,8 +27,13 @@ Cancellation removes the partial file. Setup prepares the model before replacing
 an existing installation.
 
 Models with language detection receive no forced language hint. Other models use
-a supported language derived from the Windows display language, with a fallback.
-Output is not automatically translated. Available memory, languages and recognition
+a supported language derived from the display language, with a fallback.
+Output is not automatically translated. The recommended Parakeet v3 tends to
+lock onto one language per recording and spells foreign terms phonetically;
+for speech that mixes Spanish and English, Qwen3-ASR (language detection,
+about twice Parakeet's CPU time) kept English terms and sentence structure
+across pauses in testing; Whisper is the other option. The user word list in
+`replacements.txt` fixes recurring terms with any model. Available memory, languages and recognition
 quality depend on the selected model; catalog inclusion does not guarantee every
 model works on every PC.
 
