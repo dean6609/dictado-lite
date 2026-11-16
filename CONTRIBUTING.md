@@ -61,8 +61,10 @@ Before merging, review the diff and resolve findings. For code changes, run
 `./scripts/check.ps1` on Windows for format, lint, existing units and
 compilation; on Linux or macOS run `cargo fmt --all --check`,
 `cargo clippy --locked --all-targets -- -D warnings` and `cargo test --locked`.
-The **Checks** workflow runs the same on all three systems for every pull
-request and must be green before merging. For installer changes,
+The **Build** workflow runs the same on Linux and Windows for every pull
+request and must be green before merging; macOS is checked only on request
+(`check_macos` when running the workflow by hand), because GitHub bills its
+minutes at ten times the Linux rate. For installer changes,
 `./scripts/smoke-installer.ps1` exercises a separate QA installation and
 removal. Documentation-only changes need no application build.
 Prefer squash merge and delete the merged branch. Publish only to this project's
