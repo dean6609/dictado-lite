@@ -70,9 +70,10 @@ hit have = GitHub
 pul request = pull request
 ```
 
-For speech that mixes languages freely, a model with language detection such
-as Qwen3-ASR or Whisper may do better than the recommended Parakeet; switch
-models from the tray.
+If you mix Spanish and English often, switch to **Qwen3-ASR 0.6B** from the
+tray: in our tests it kept English terms (*deploy*, *staging*, *pull request*)
+and did not split sentences at pauses, at about twice the recognition time of
+Parakeet on the CPU. Whisper also detects languages.
 
 ## Linux and macOS
 
