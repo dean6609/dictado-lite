@@ -1,7 +1,8 @@
 name: Build
 # One workflow, sized for a free account: pull requests check Linux (1x minutes)
 # and Windows (2x, with cached tools, engine and cargo output). macOS costs 10x
-# and runs only when asked. The manual release run reuses the same Windows job.
+# and runs only when asked or released. The manual release run reuses the same
+# Windows job and adds the Linux and macOS terminal packages.
 on:
   pull_request:
   workflow_dispatch:
@@ -11,7 +12,7 @@ on:
         type: string
         default: ''
       check_macos:
-        description: 'Also check the macOS build (10x minutes)'
+        description: 'Also check the macOS build and the Linux/macOS packages (10x minutes)'
         type: boolean
         default: false
 permissions:
@@ -116,10 +117,50 @@ jobs:
           name: Dictado-Lite-Windows-x64
           path: artifacts/*-Setup.exe
           if-no-files-found: error
+  package:
+    name: ${{ matrix.name }} package
+    if: inputs.release_tag != '' || inputs.check_macos
+    strategy:
+      matrix:
+        include:
+          # The oldest supported image links the oldest glibc, so the binary
+          # runs on more distributions.
+          - name: Linux x64
+            os: ubuntu-22.04
+          - name: macOS arm64
+            os: macos-15
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ inputs.release_tag }}
+      - name: Audio headers
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libasound2-dev
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            ~/.cargo/registry
+            target/package
+          key: package-${{ matrix.os }}-${{ hashFiles('Cargo.lock', '.cargo/config.toml', 'rust-toolchain.toml', 'scripts/package-unix.sh') }}
+      - name: Build the package
+        run: ./scripts/package-unix.sh
+      - name: Install and start it
+        run: |
+          mkdir "$RUNNER_TEMP/unpacked"
+          tar -xzf artifacts/*.tar.gz -C "$RUNNER_TEMP/unpacked"
+          "$RUNNER_TEMP"/unpacked/*/install.sh --prefix "$RUNNER_TEMP/prefix" < /dev/null
+          ! "$RUNNER_TEMP/prefix/bin/dictado-lite" > "$RUNNER_TEMP/usage.txt" 2>&1
+          grep -q '^Usage:' "$RUNNER_TEMP/usage.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: Dictado-Lite-${{ runner.os }}
+          path: artifacts/*.tar.gz
+          if-no-files-found: error
   release:
     name: Draft release
     if: inputs.release_tag != ''
-    needs: windows
+    needs: [windows, package]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -130,7 +171,8 @@ jobs:
           ref: ${{ inputs.release_tag }}
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: Dictado-Lite-Windows-x64
+          pattern: Dictado-Lite-*
+          merge-multiple: true
           path: artifacts
       - name: Create draft from the merged version tag
         env:
@@ -141,5 +183,6 @@ jobs:
           test "$RELEASE_TAG" = "dictado-v$version"
           git show-ref --verify "refs/tags/$RELEASE_TAG"
           git merge-base --is-ancestor HEAD origin/main
-          test -f "artifacts/Dictado-Lite-$version-Setup.exe"
-          gh release create "$RELEASE_TAG" "artifacts/Dictado-Lite-$version-Setup.exe" --draft --verify-tag --title "Dictado Lite $version" --notes-file docs/release-notes.md
+          set -- "artifacts/Dictado-Lite-$version-"{Setup.exe,Linux-x64.tar.gz,macOS-arm64.tar.gz}
+          for asset in "$@"; do test -f "$asset"; done
+          gh release create "$RELEASE_TAG" "$@" --draft --verify-tag --title "Dictado Lite $version" --notes-file docs/release-notes.md

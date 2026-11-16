@@ -1,33 +1,33 @@
-## Dictado Lite 0.2.0
+## Dictado Lite 0.3.0
 
-Cleaner text after pauses, a personal word list, and a terminal build that
-also runs on Linux and macOS.
+Ready-made packages for Linux and macOS, next to the Windows installer.
 
 ### What's new
 
-- **Fewer stray periods:** pausing while you speak no longer leaves runs of
-  periods or a period before the first word. A pause before a connecting word
-  (y, porque, que, para, and, because, with...) no longer splits your sentence.
-- **Your own words:** write `heard = written` lines in `replacements.txt`
-  beside the settings (for example `hit have = GitHub`) and the recognized
-  phrase is replaced, whole words only, case-insensitively. This is the way to
-  fix English terms that a Spanish-first model spells phonetically.
-- **Safer settings:** a shortcut saved by another version no longer stops the
-  app from starting; the default shortcut is used instead.
-- **Linux and macOS:** the same code builds on both. `dictado-lite --record`
+- **Linux and macOS packages:** download the package for your system, unpack
+  it and run `./install.sh`. It installs for your user only, in `~/.local`,
+  and offers to download the recommended model. `dictado-lite --record`
   records from the microphone, recognizes locally and prints the text, so it
-  can be piped into a clipboard tool. The tray application, the global
+  can be piped into a clipboard tool. `./install.sh --uninstall` removes the
+  program and keeps settings and models. The tray application, the global
   shortcut and typing into other apps remain Windows only.
-- **Checked before release:** formatting, lint and tests run on Linux and
-  Windows in GitHub Actions for every change, and the release build repeats
-  the Windows checks before packaging.
+- **Simpler model download in the terminal:** `dictado-lite --download-model`
+  without a name fetches the model the settings select (the recommended one by
+  default) and shows its progress.
 
 ### Download
 
-Download **Dictado-Lite-0.2.0-Setup.exe**, run it and choose your model.
-Existing installations can be updated with the same setup. No administrator
-rights are required. Settings and downloaded models survive uninstall.
+- **Windows x64:** download **Dictado-Lite-0.3.0-Setup.exe**, run it and
+  choose your model. Existing installations can be updated with the same
+  setup. Vulkan acceleration is used when available, with CPU fallback.
+- **Linux x64:** download **Dictado-Lite-0.3.0-Linux-x64.tar.gz**, unpack it
+  and run `./install.sh`. Needs glibc 2.35 or newer (Ubuntu 22.04, Debian 12,
+  Fedora 36 and later) and ALSA; recognition runs on the CPU.
+- **macOS on Apple Silicon:** download
+  **Dictado-Lite-0.3.0-macOS-arm64.tar.gz**, unpack it and run
+  `./install.sh`. Recognition uses Metal.
 
-Windows x64 is required for the installer. Vulkan acceleration is used when
-available, with CPU fallback. The installer is currently unsigned. Application
-code is MIT; downloaded models have their own licenses.
+No administrator rights are required. Settings and downloaded models survive
+uninstall. No package is code-signed yet: Windows may show a SmartScreen
+warning, and the macOS installer clears the download quarantine flag on its
+own copy. Application code is MIT; downloaded models have their own licenses.

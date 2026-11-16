@@ -9,7 +9,7 @@
 Press a shortcut, speak, and your words appear where your cursor is.<br>
 Everything runs on your PC — no account, no subscription, nothing stored.
 
-[How it works](#how-it-works) · [Install](#install) · [Models](docs/models.md) · [Contributing](CONTRIBUTING.md)
+[How it works](#how-it-works) · [Install](#install) · [Linux and macOS](#linux-and-macos) · [Models](docs/models.md) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
@@ -26,7 +26,7 @@ lives in the tray icon next to the clock.
 
 ## Install
 
-1. Download **Dictado-Lite-0.2.0-Setup.exe** from the [latest release](https://github.com/dean6609/dictado-lite/releases/latest).
+1. Download **Dictado-Lite-0.3.0-Setup.exe** from the [latest release](https://github.com/dean6609/dictado-lite/releases/latest).
 2. Run it and pick a speech model. The recommended one works well for most
    people; you can switch later.
 3. Open any app and press **Ctrl + Space**.
@@ -61,7 +61,8 @@ rejoins a sentence that was split before a connecting word such as *y*,
 
 English names and technical terms inside Spanish speech are often spelled the
 way they sound. Teach the app your words: create `replacements.txt` next to
-the settings (`%LOCALAPPDATA%DictadoLite` on Windows) with one line per
+the settings (`%LOCALAPPDATA%\DictadoLite` on Windows; [other
+systems](docs/architecture.md#installation-and-settings)) with one line per
 phrase, and the recognized phrase is replaced whole-word, case-insensitively:
 
 ```text
@@ -77,11 +78,32 @@ Parakeet on the CPU. Whisper also detects languages.
 
 ## Linux and macOS
 
-The same code builds on Linux and macOS as a terminal tool: `dictado-lite
---record` records from the microphone until you press Enter, recognizes
-locally and prints the text, so you can pipe it into `wl-copy`, `xclip` or
-`pbcopy`. The tray application, the global shortcut and typing into other
-apps are Windows only. Build steps are in [CONTRIBUTING.md](CONTRIBUTING.md).
+On Linux and macOS Dictado Lite is a terminal tool: `dictado-lite --record`
+records from the microphone until you press Enter, recognizes locally and
+prints the text, so you can pipe it into `wl-copy`, `xclip` or `pbcopy`. The
+tray application, the global shortcut and typing into other apps are Windows
+only.
+
+1. Download **Dictado-Lite-0.3.0-Linux-x64.tar.gz** or
+   **Dictado-Lite-0.3.0-macOS-arm64.tar.gz** (Apple Silicon) from the
+   [latest release](https://github.com/dean6609/dictado-lite/releases/latest).
+2. Unpack it and run the installer. It installs for your user only, in
+   `~/.local`, and offers to download the recommended model:
+
+   ```sh
+   tar -xzf Dictado-Lite-*.tar.gz
+   ./Dictado-Lite-*/install.sh
+   ```
+
+3. Run `dictado-lite --record`, speak and press Enter.
+
+`install.sh --uninstall` removes the program and keeps settings and models;
+`--prefix DIR` installs elsewhere. Linux needs x86-64 with glibc 2.35 or newer
+(Ubuntu 22.04, Debian 12, Fedora 36 and later) and ALSA, which desktop
+distributions include; recognition runs on the CPU. macOS uses Metal. The
+macOS binary is not signed with an Apple developer ID, so the installer clears
+the download quarantine flag on its own copy. Other systems and processors can
+[build it themselves](CONTRIBUTING.md#build-on-linux-or-macos).
 
 ## Build it yourself
 

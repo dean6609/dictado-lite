@@ -16,7 +16,7 @@ builds a terminal binary. Model weights are downloaded separately.
 | native/platform/windows/ | Tray, shortcut, indicator, settings and text insertion |
 | native/models.rs | Catalog, selected model and verified downloads |
 | native/setup/ | Windows setup wizard, owned-file installation and removal |
-| scripts/ | Windows build tools, checks and packaging |
+| scripts/ | Build tools, checks, Windows installer and Linux/macOS packages |
 | models/ | Catalog snapshot, recommendation list and default model metadata |
 | licenses/ | Original dependency license texts required for distribution |
 
@@ -55,7 +55,9 @@ Setup downloads or reuses the selected model before replacing an installation.
 New installers contain no weights. Partial downloads never become active models.
 Upgrade and uninstall operate on manifest-owned files and preserve unrelated files.
 
-Program files live in %LOCALAPPDATA%/Programs/DictadoLite. Settings, the word
+Program files live in %LOCALAPPDATA%/Programs/DictadoLite on Windows and in
+~/.local/lib/dictado-lite (command linked from ~/.local/bin) when the Linux or
+macOS package is installed with install.sh. Settings, the word
 list and models live in the per-user data folder and survive uninstall:
 %LOCALAPPDATA%/DictadoLite on Windows, ~/Library/Application Support/DictadoLite
 on macOS and $XDG_DATA_HOME/dictado-lite (default ~/.local/share/dictado-lite)
@@ -68,4 +70,7 @@ Windows links a prebuilt shared engine with loadable backends (CPU tiers and
 Vulkan) produced by scripts/build-native.ps1. Linux and macOS compile the engine
 statically from the crate sources through CMake during `cargo build`: CPU on
 Linux, Metal with CPU fallback on macOS. The GPU request is Metal on macOS and
-Vulkan elsewhere; any GPU failure retries once on the CPU.
+Vulkan elsewhere; any GPU failure retries once on the CPU. Release packages
+never tune the engine for the build machine: scripts/package-unix.sh builds
+Linux with shared libraries and per-tier CPU modules found through an
+`$ORIGIN/lib` rpath, and macOS as the same static Metal binary.
