@@ -26,19 +26,18 @@ impl Default for Config {
     }
 }
 fn path() -> Result<PathBuf> {
-    Ok(PathBuf::from(
-        std::env::var_os("LOCALAPPDATA")
-            .ok_or_else(|| Error::message("LOCALAPPDATA unavailable"))?,
-    )
-    .join("DictadoLite/settings.json"))
+    Ok(crate::paths::data_dir()?.join("settings.json"))
 }
 impl Config {
     pub fn load() -> Result<Self> {
         match std::fs::read(path()?) {
             Ok(bytes) => {
-                let config: Self = serde_json::from_slice(&bytes).map_err(Error::message)?;
+                let mut config: Self = serde_json::from_slice(&bytes).map_err(Error::message)?;
                 if !valid_shortcut(config.key, config.modifiers) {
-                    return Err(Error::message("Invalid shortcut configuration"));
+                    // A shortcut from another version must not lock the user out.
+                    let default = Self::default();
+                    config.key = default.key;
+                    config.modifiers = default.modifiers;
                 }
                 Ok(config)
             }

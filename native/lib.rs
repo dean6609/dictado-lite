@@ -9,6 +9,8 @@ pub mod config;
 pub mod engine;
 pub mod locale;
 pub mod models;
+pub mod paths;
 #[cfg(windows)]
 pub mod platform;
 pub mod session;
+pub mod transfer;

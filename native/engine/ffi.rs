@@ -9,7 +9,8 @@ use transcribe_cpp_sys as sys;
 
 #[derive(Clone, Copy, Debug)]
 pub enum Backend {
-    PreferVulkan,
+    /// The platform GPU (Metal on macOS, Vulkan elsewhere) with CPU fallback.
+    Gpu,
     Cpu,
 }
 
@@ -56,12 +57,13 @@ impl Engine {
         if let Err(error) = init {
             return Err(Error::message(error));
         }
+        let gpu = if cfg!(target_os = "macos") {
+            sys::transcribe_backend_request::TRANSCRIBE_BACKEND_METAL
+        } else {
+            sys::transcribe_backend_request::TRANSCRIBE_BACKEND_VULKAN
+        };
         match backend {
-            Backend::PreferVulkan => Self::load_on(
-                path,
-                sys::transcribe_backend_request::TRANSCRIBE_BACKEND_VULKAN,
-            )
-            .or_else(|_| {
+            Backend::Gpu => Self::load_on(path, gpu).or_else(|_| {
                 Self::load_on(
                     path,
                     sys::transcribe_backend_request::TRANSCRIBE_BACKEND_CPU,

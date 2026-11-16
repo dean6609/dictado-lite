@@ -12,7 +12,7 @@ fn model_run_cancel_and_reload() {
     let backend = if std::env::var_os("DICTADO_TEST_CPU").is_some() {
         Backend::Cpu
     } else {
-        Backend::PreferVulkan
+        Backend::Gpu
     };
     let mut engine = Engine::load(&path, backend).expect("model and session load");
     let cancel = Cancellation::default();

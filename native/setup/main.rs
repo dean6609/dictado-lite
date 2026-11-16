@@ -1,14 +1,28 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+//! Windows installer. Other desktops build and run the terminal binary only.
+#[cfg(windows)]
 mod install;
+#[cfg(windows)]
 mod integration;
+#[cfg(windows)]
 mod payload;
+#[cfg(windows)]
 mod ui;
+#[cfg(windows)]
 use dictado_lite::{
     locale::text,
     platform::windows::{pw, wide},
 };
+#[cfg(windows)]
 use payload::Result;
+#[cfg(windows)]
 use windows::{core::PCWSTR, Win32::UI::WindowsAndMessaging::*};
+#[cfg(not(windows))]
+fn main() {
+    eprintln!("Dictado Lite setup packages the Windows build only. On Linux and macOS use the dictado-lite binary directly.");
+    std::process::exit(1);
+}
+#[cfg(windows)]
 fn message(value: &str, flags: MESSAGEBOX_STYLE) -> MESSAGEBOX_RESULT {
     let message: Vec<_> = value.encode_utf16().chain(Some(0)).collect();
     unsafe {
@@ -23,6 +37,7 @@ fn message(value: &str, flags: MESSAGEBOX_STYLE) -> MESSAGEBOX_RESULT {
         )
     }
 }
+#[cfg(windows)]
 fn run() -> Result<()> {
     let args: Vec<_> = std::env::args().skip(1).collect();
     let test = args.iter().any(|a| a == "--test");
@@ -78,6 +93,7 @@ fn run() -> Result<()> {
 
     Ok(())
 }
+#[cfg(windows)]
 fn main() {
     if let Err(e) = run() {
         eprintln!("{e}");

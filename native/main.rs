@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use dictado_lite::{
     audio,
+    cleanup::{Conservative, TextCleaner},
     engine::{self, Backend, Worker},
 };
 use serde::Serialize;
@@ -15,7 +16,23 @@ struct Measurement {
     text: String,
     cleanup_us: u128,
 }
+const USAGE: &str = "Usage:
+  dictado-lite <model.gguf> <mono-16k.wav> [--cpu] [--verify-model] [--cleanup] [--repeat=N] [--idle-after=N]
+  dictado-lite --record [--model <model.gguf>] [--microphone <name>] [--seconds=N] [--cpu] [--raw]
+  dictado-lite --download-model <catalog-key>
+  dictado-lite --list-microphones | --capture-probe [--microphone <name>]";
+
 fn main() {
+    // The release build has no console of its own; terminal commands print
+    // into the console that launched them.
+    #[cfg(windows)]
+    if std::env::args().len() > 1 {
+        unsafe {
+            let _ = windows::Win32::System::Console::AttachConsole(
+                windows::Win32::System::Console::ATTACH_PARENT_PROCESS,
+            );
+        }
+    }
     if let Err(error) = run() {
         eprintln!("{error}");
         #[cfg(windows)]
@@ -34,9 +51,13 @@ fn main() {
         std::process::exit(1);
     }
 }
+fn option(args: &[String], name: &str) -> Option<String> {
+    args.windows(2)
+        .find(|pair| pair[0] == name)
+        .map(|pair| pair[1].clone())
+}
 fn run() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    #[cfg(windows)]
     if args.first().is_some_and(|arg| arg == "--download-model") {
         let key = args.get(1).ok_or("Specify a catalog model key")?;
         let model = dictado_lite::models::catalog()
@@ -56,7 +77,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
                 dictado_lite::models::verify(&path, model.weights())?;
                 println!(
                     "{}",
-                    serde_json::json!({"model":model.key(),"verified":true,"bytes":model.weights().size_bytes})
+                    serde_json::json!({"model":model.key(),"path":path,"verified":true,"bytes":model.weights().size_bytes})
                 );
             }
             Err(engine::Error::Cancelled) => println!("{}", serde_json::json!({"cancelled":true})),
@@ -74,11 +95,8 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
     if args.first().is_some_and(|arg| arg == "--capture-probe") {
-        let selected = args
-            .windows(2)
-            .find(|pair| pair[0] == "--microphone")
-            .map(|pair| pair[1].as_str());
-        let capture = audio::capture::Capture::start(selected)?;
+        let selected = option(&args, "--microphone");
+        let capture = audio::capture::Capture::start(selected.as_deref())?;
         std::thread::sleep(std::time::Duration::from_secs(5));
         let recording = capture.finish()?;
         let rms = (recording
@@ -100,23 +118,19 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         );
         return Ok(());
     }
+    if args.first().is_some_and(|arg| arg == "--record") {
+        return record(&args);
+    }
     #[cfg(windows)]
     if args.is_empty() || args[0].starts_with("--") {
         return dictado_lite::platform::windows::run(&args);
     }
-    if args.len() < 2 {
-        return Err(
-            "Usage: dictado-lite <model.gguf> <mono-16k.wav> [--cpu] [--verify-model] [--repeat=N] [--idle-after=N]"
-                .into(),
-        );
+    if args.len() < 2 || args[0].starts_with("--") {
+        return Err(USAGE.into());
     }
     let model = PathBuf::from(&args[0]);
     let wav = PathBuf::from(&args[1]);
-    let backend = if args.iter().any(|a| a == "--cpu") {
-        Backend::Cpu
-    } else {
-        Backend::PreferVulkan
-    };
+    let backend = backend(&args);
     if args.iter().any(|a| a == "--verify-model") {
         engine::verify_model(&model)?;
     }
@@ -136,8 +150,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         let text = result.result?;
         let cleanup = std::time::Instant::now();
         let (text, cleanup_us) = if args.iter().any(|a| a == "--cleanup") {
-            use dictado_lite::cleanup::TextCleaner;
-            let text = dictado_lite::cleanup::Conservative.clean(&text);
+            let text = Conservative::load().clean(&text);
             (text, cleanup.elapsed().as_micros())
         } else {
             (text, 0)
@@ -161,5 +174,66 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         }
         std::thread::sleep(std::time::Duration::from_secs(seconds));
     }
+    Ok(())
+}
+fn backend(args: &[String]) -> Backend {
+    if args.iter().any(|a| a == "--cpu") {
+        Backend::Cpu
+    } else {
+        Backend::Gpu
+    }
+}
+/// Terminal dictation for any desktop: record until Enter (or a time limit),
+/// recognize locally and print the text. Nothing is typed into another app.
+fn record(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
+    let config = dictado_lite::config::Config::load()?;
+    let model = match option(args, "--model") {
+        Some(path) => PathBuf::from(path),
+        None => {
+            let selected = dictado_lite::models::selected(&config.model_id);
+            let cache = selected.cache_path()?;
+            if !selected.ready(&cache) {
+                return Err(format!(
+                    "Model not downloaded. Run: dictado-lite --download-model {}",
+                    selected.key()
+                )
+                .into());
+            }
+            cache
+        }
+    };
+    let seconds = args
+        .iter()
+        .find_map(|a| a.strip_prefix("--seconds="))
+        .map(str::parse::<u64>)
+        .transpose()?
+        .map(|s| s.clamp(1, 600));
+    let microphone = option(args, "--microphone").or(config.microphone.clone());
+    let capture = audio::capture::Capture::start(microphone.as_deref())?;
+    match seconds {
+        Some(seconds) => {
+            eprintln!("Recording for {seconds} s...");
+            std::thread::sleep(std::time::Duration::from_secs(seconds));
+        }
+        None => {
+            eprintln!("Recording... press Enter to recognize.");
+            let mut line = String::new();
+            std::io::stdin().read_line(&mut line)?;
+        }
+    }
+    let recording = capture.finish()?;
+    eprintln!("Recognizing...");
+    let mut worker = Worker::start(model, backend(args));
+    worker.submit_recording(1, recording)?;
+    let text = worker.completions.recv()?.result?;
+    let text = if args.iter().any(|a| a == "--raw") || !config.cleanup {
+        text
+    } else {
+        Conservative::load().clean(&text)
+    };
+    if text.trim().is_empty() {
+        return Err("No text was recognized".into());
+    }
+    println!("{text}");
     Ok(())
 }

@@ -2,8 +2,9 @@
 
 ## What this project is
 
-Dictado Lite is a small native Windows app for local voice typing: press a
+Dictado Lite is a small native app for local voice typing: on Windows, press a
 shortcut, speak, and the text is typed into the app the user was working in.
+On Linux and macOS the same core runs as a terminal command that prints text.
 It is an independent, reduced derivative of Handy, rewritten as a native Rust
 core with a C++ recognition engine.
 

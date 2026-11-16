@@ -104,13 +104,13 @@ impl Worker {
                                 .run(&samples, &cancel)
                         });
                         let mut inference_ms = start.elapsed().as_millis();
-                        // Vulkan can fail during allocation/compute after loading
+                        // A GPU backend can fail during allocation/compute after loading
                         // successfully. Release its model before retrying on CPU.
                         if retry_cpu(&result, &samples)
                             && !cancel.cancelled()
                             && engine
                                 .as_ref()
-                                .is_some_and(|e| e.backend.starts_with("Vulkan"))
+                                .is_some_and(|e| !e.backend.to_ascii_lowercase().starts_with("cpu"))
                         {
                             engine = None;
                             let start = Instant::now();

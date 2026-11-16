@@ -1,0 +1,90 @@
+name: Checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Commit, branch or tag to check'
+        type: string
+        default: ''
+permissions:
+  contents: read
+jobs:
+  unix:
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x64
+            os: ubuntu-24.04
+          - name: macOS arm64
+            os: macos-15
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+      - name: Audio headers
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libasound2-dev ninja-build
+      - name: Rust
+        run: |
+          rustup show active-toolchain || rustup toolchain install
+          cargo --version
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            ~/.cargo/registry
+            target
+          key: ${{ matrix.os }}-cargo-${{ hashFiles('Cargo.lock', '.cargo/config.toml') }}
+      - name: Format
+        run: cargo fmt --all --check
+      - name: Lint
+        run: cargo clippy --locked --all-targets -- -D warnings
+      - name: Test
+        run: cargo test --locked
+      - name: Terminal binary
+        run: |
+          cargo build --locked --release
+          ./target/release/dictado-lite --list-microphones || true
+          ./target/release/dictado-lite --help 2>&1 | head -n 3 || true
+  windows:
+    name: Windows x64
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+      - name: Rust GNU
+        shell: pwsh
+        run: |
+          rustup toolchain install 1.99.0-x86_64-pc-windows-gnu --profile minimal --component rustfmt --component clippy
+          rustup override set 1.99.0-x86_64-pc-windows-gnu
+      - name: Cache pinned build tools
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            ~/.cargo/registry
+            .tools/cmake-4.3.5-windows-x86_64
+            .tools/ninja
+            .tools/llvm-mingw-20260922-ucrt-x86_64
+            .tools/vulkan/Bin
+            .tools/vulkan/Include
+            .tools/vulkan/Lib
+          key: windows-gnu-tools-${{ hashFiles('scripts/tool-sources.json', 'scripts/bootstrap-tools.ps1') }}
+      - name: Cache compiled native engine
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            .tools/catalog-source
+            .tools/catalog-build-gnu-vulkan
+            .tools/catalog-gnu-vulkan
+          key: windows-gnu-engine-${{ hashFiles('scripts/build-native.ps1', 'scripts/prepare-native.ps1', 'scripts/tool-sources.json') }}
+      - name: Format, lint, test and release build
+        shell: pwsh
+        run: |
+          ./scripts/build-native.ps1 -Vulkan -Gnu
+          ./scripts/check.ps1

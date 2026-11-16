@@ -1,8 +1,13 @@
-//! UI language follows the operator's Windows display language; English fallback.
+//! UI language follows the operator's display language; English fallback.
 use std::sync::OnceLock;
 
 pub fn spanish_ui(language_id: u16) -> bool {
     language_id & 0x3ff == 0x0a
+}
+/// POSIX locale names such as `es_ES.UTF-8`, `es` or `C`.
+pub fn spanish_locale(name: &str) -> bool {
+    let name = name.to_ascii_lowercase();
+    name == "es" || name.starts_with("es_") || name.starts_with("es-") || name.starts_with("es.")
 }
 pub fn text(es: &'static str, en: &'static str) -> &'static str {
     static SPANISH: OnceLock<bool> = OnceLock::new();
@@ -14,7 +19,11 @@ pub fn text(es: &'static str, en: &'static str) -> &'static str {
         }
         #[cfg(not(windows))]
         {
-            false
+            ["LC_ALL", "LC_MESSAGES", "LANG"]
+                .iter()
+                .filter_map(|name| std::env::var(name).ok())
+                .find(|value| !value.is_empty())
+                .is_some_and(|value| spanish_locale(&value))
         }
     });
     if spanish {
@@ -64,6 +73,12 @@ mod tests {
         }
         for id in [0x0409, 0x040c, 0, 0x0425] {
             assert!(!super::spanish_ui(id));
+        }
+        for name in ["es", "es_ES.UTF-8", "es_MX", "ES_AR"] {
+            assert!(super::spanish_locale(name));
+        }
+        for name in ["en_US.UTF-8", "C", "POSIX", "est_EE", ""] {
+            assert!(!super::spanish_locale(name));
         }
     }
 }

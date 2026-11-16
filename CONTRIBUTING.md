@@ -26,6 +26,25 @@ model. Tools, compiled output and installer payloads are ignored by Git.
 Everything builds locally; forks need no GitHub Actions or repository access.
 Never commit recordings, transcripts or downloaded model weights.
 
+## Build on Linux or macOS
+
+Install Rustup, CMake and a C++ compiler (GCC or Clang; Xcode command line
+tools on macOS). Linux also needs the ALSA headers (`libasound2-dev` on
+Debian and Ubuntu, `alsa-lib-devel` on Fedora). Downloads use the system `curl`.
+
+```sh
+git clone https://github.com/dean6609/dictado-lite.git
+cd dictado-lite
+cargo build --locked --release
+./target/release/dictado-lite --download-model handy-computer/parakeet-tdt-0.6b-v3-gguf/parakeet-tdt-0.6b-v3-Q8_0.gguf
+./target/release/dictado-lite --record
+```
+
+The first build compiles the engine from the crate sources, which takes a few
+minutes. The result is one static binary: CPU recognition on Linux, Metal with
+CPU fallback on macOS. These systems get the terminal commands only; the tray
+application, global shortcut and text insertion are Windows code.
+
 ## Understand the code
 
 [Architecture](docs/architecture.md) maps modules, threading and installation.
@@ -39,9 +58,13 @@ verification and limitations. Inspect the real app for interface changes and use
 actual captures. Disclose AI assistance and report only reviews actually performed.
 
 Before merging, review the diff and resolve findings. For code changes, run
-`./scripts/check.ps1` locally for format, lint, existing units and compilation.
-For installer changes, `./scripts/smoke-installer.ps1` exercises a separate QA
-installation and removal. Documentation-only changes need no application build.
+`./scripts/check.ps1` on Windows for format, lint, existing units and
+compilation; on Linux or macOS run `cargo fmt --all --check`,
+`cargo clippy --locked --all-targets -- -D warnings` and `cargo test --locked`.
+The **Checks** workflow runs the same on all three systems for every pull
+request and must be green before merging. For installer changes,
+`./scripts/smoke-installer.ps1` exercises a separate QA installation and
+removal. Documentation-only changes need no application build.
 Prefer squash merge and delete the merged branch. Publish only to this project's
 origin; the upstream Handy remote is for reference.
 
@@ -49,7 +72,7 @@ origin; the upstream Handy remote is for reference.
 
 Follow [the release checklist](docs/releasing.md). Merging a pull request does not
 publish an installer. Launch the installer workflow manually from `main`, with
-an existing version tag, to create a draft for inspection and publication.
-Tools and the native engine are cached on `main` for reuse between versions.
-Commits, PRs and tags launch no automatic workflows. Keep the app version, tag
-and installer filename aligned.
+an existing version tag, to run the checks and create a draft for inspection
+and publication. Tools and the native engine are cached on `main` for reuse
+between versions. Commits, PRs and tags launch no automatic installer build.
+Keep the app version, tag and installer filename aligned.

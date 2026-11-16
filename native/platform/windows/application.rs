@@ -65,7 +65,7 @@ impl Application {
             paused: false,
             phase: Phase::Idle,
             last_text: None,
-            worker: Worker::start(model, Backend::PreferVulkan),
+            worker: Worker::start(model, Backend::Gpu),
             sessions: Sessions::default(),
             capture: None,
             id: None,
@@ -83,7 +83,7 @@ impl Application {
     }
     pub fn set_model(&mut self, path: PathBuf) {
         self.cancel();
-        self.worker = Worker::start(path, Backend::PreferVulkan);
+        self.worker = Worker::start(path, Backend::Gpu);
     }
     fn begin(&mut self, target: HWND) -> Option<u64> {
         if self.phase == Phase::Finishing {
@@ -246,7 +246,7 @@ impl Application {
                         serde_json::json!({"backend":completion.backend,"load_ms":completion.load_ms,"inference_ms":completion.inference_ms,"voice_score":completion.voice_score}),
                     );
                     let text = if self.config.cleanup {
-                        Conservative.clean(&text)
+                        Conservative::load().clean(&text)
                     } else {
                         text
                     };

@@ -1,0 +1,4 @@
+# Linux and macOS compile the engine from the crate sources with CMake. Keep
+# the Windows posture: no system BLAS dependency for the host decoder.
+[env]
+TRANSCRIBE_CMAKE_ARGS = "-DTRANSCRIBE_USE_SYSTEM_BLAS=OFF"
