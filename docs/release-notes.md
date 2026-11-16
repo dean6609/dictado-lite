@@ -18,8 +18,9 @@ also runs on Linux and macOS.
   records from the microphone, recognizes locally and prints the text, so it
   can be piped into a clipboard tool. The tray application, the global
   shortcut and typing into other apps remain Windows only.
-- **Checked before release:** formatting, lint and tests run on Linux, macOS
-  and Windows in GitHub Actions, and the installer workflow runs them first.
+- **Checked before release:** formatting, lint and tests run on Linux and
+  Windows in GitHub Actions for every change, and the release build repeats
+  the Windows checks before packaging.
 
 ### Download
 

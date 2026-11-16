@@ -1,25 +1,63 @@
-name: Windows installer
+name: Build
+# One workflow, sized for a free account: pull requests check Linux (1x minutes)
+# and Windows (2x, with cached tools, engine and cargo output). macOS costs 10x
+# and runs only when asked. The manual release run reuses the same Windows job.
 on:
+  pull_request:
   workflow_dispatch:
     inputs:
       release_tag:
         description: 'Existing version tag to release; leave empty to build only'
         type: string
         default: ''
+      check_macos:
+        description: 'Also check the macOS build (10x minutes)'
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
-  group: windows-${{ github.ref }}
+  group: build-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  checks:
-    name: Checks
-    uses: ./.github/workflows/check.yml
-    with:
-      ref: ${{ inputs.release_tag || github.ref }}
+  linux:
+    name: Linux x64
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Audio headers
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libasound2-dev ninja-build
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            ~/.cargo/registry
+            target
+          key: linux-cargo-${{ hashFiles('Cargo.lock', '.cargo/config.toml', 'rust-toolchain.toml') }}
+      - name: Format, lint and test
+        run: |
+          cargo fmt --all --check
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo test --locked
+  macos:
+    name: macOS arm64
+    if: github.event_name == 'workflow_dispatch' && inputs.check_macos
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            ~/.cargo/registry
+            target
+          key: macos-cargo-${{ hashFiles('Cargo.lock', '.cargo/config.toml', 'rust-toolchain.toml') }}
+      - name: Format, lint and test
+        run: |
+          cargo fmt --all --check
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo test --locked
   windows:
-    name: Build installer
-    needs: checks
+    name: Windows x64
     runs-on: windows-2025
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -35,7 +73,6 @@ jobs:
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: |
-            ~/.cargo/registry
             .tools/cmake-4.3.5-windows-x86_64
             .tools/ninja
             .tools/llvm-mingw-20260922-ucrt-x86_64
@@ -51,15 +88,30 @@ jobs:
             .tools/catalog-build-gnu-vulkan
             .tools/catalog-gnu-vulkan
           key: windows-gnu-engine-${{ hashFiles('scripts/build-native.ps1', 'scripts/prepare-native.ps1', 'scripts/tool-sources.json') }}
-      - name: Build the Windows installer
+      - name: Cache cargo output
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            ~/.cargo/registry
+            target
+          key: windows-cargo-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-${{ github.ref_name }}
+          restore-keys: |
+            windows-cargo-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
+            windows-cargo-
+      - name: Format, lint, test and release build
         shell: pwsh
         run: |
           ./scripts/build-native.ps1 -Vulkan -Gnu
-          cargo build --locked --release
-          if ($LASTEXITCODE -ne 0) { throw 'Application build failed' }
+          ./scripts/check.ps1
+      - name: Build the installer
+        if: inputs.release_tag != ''
+        shell: pwsh
+        run: |
+          ./scripts/build-native.ps1 -Vulkan -Gnu
           ./scripts/stage-runtime.ps1
           ./scripts/build-installer.ps1
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: inputs.release_tag != ''
         with:
           name: Dictado-Lite-Windows-x64
           path: artifacts/*-Setup.exe
