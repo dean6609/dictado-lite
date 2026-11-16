@@ -5,8 +5,8 @@ Merging source and publishing a release are separate steps, but one workflow
 tests) and Windows (the same plus a release build), with cached tools, native
 engine and cargo output. The manual release run repeats the Windows job, builds
 the installer, packages the Linux x64 and macOS arm64 terminal builds and drafts
-the release. Outside releases macOS is checked only when asked (`check_macos`),
-because GitHub bills it at ten times the Linux minutes.
+the release. Outside releases macOS and the packages are checked only when
+asked (`check_macos`), because GitHub bills macOS at ten times the Linux minutes.
 Release source must be tagged and already merged into `main`; start the
 workflow from `main` so caches can be reused between versions.
 

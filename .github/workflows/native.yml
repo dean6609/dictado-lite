@@ -12,7 +12,7 @@ on:
         type: string
         default: ''
       check_macos:
-        description: 'Also check the macOS build (10x minutes)'
+        description: 'Also check the macOS build and the Linux/macOS packages (10x minutes)'
         type: boolean
         default: false
 permissions:
@@ -119,7 +119,7 @@ jobs:
           if-no-files-found: error
   package:
     name: ${{ matrix.name }} package
-    if: inputs.release_tag != ''
+    if: inputs.release_tag != '' || inputs.check_macos
     strategy:
       matrix:
         include:
